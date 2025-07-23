@@ -1,11 +1,8 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../models/ingredient.dart';
-import '../services/firestore_service.dart';
 
 class IngredientScreen extends StatefulWidget {
-  final String userId;
-  const IngredientScreen({Key? key, required this.userId}) : super(key: key);
+  const IngredientScreen({Key? key}) : super(key: key);
 
   @override
   State<IngredientScreen> createState() => _IngredientScreenState();
@@ -16,141 +13,180 @@ class _IngredientScreenState extends State<IngredientScreen> {
   final TextEditingController _typeController = TextEditingController();
   String searchQuery = '';
 
-  void _addIngredient() async {
+  List<Ingredient> _ingredients = [
+    Ingredient(id: '1', name: 'Tomato', type: 'Vegetable'),
+    Ingredient(id: '2', name: 'Chicken', type: 'Meat'),
+    Ingredient(id: '3', name: 'Salt', type: 'Spice'),
+  ];
+
+  void _addIngredient() {
     if (_nameController.text.trim().isEmpty) return;
-    final service = Provider.of<FirestoreService>(context, listen: false);
-    await service.addIngredient(
-      widget.userId,
-      Ingredient(id: '', name: _nameController.text.trim(), type: _typeController.text.trim()),
+    setState(() {
+      _ingredients.add(Ingredient(
+        id: DateTime.now().millisecondsSinceEpoch.toString(),
+        name: _nameController.text.trim(),
+        type: _typeController.text.trim(),
+      ));
+      _nameController.clear();
+      _typeController.clear();
+    });
+  }
+
+  void _editIngredient(Ingredient ingredient) {
+    _nameController.text = ingredient.name;
+    _typeController.text = ingredient.type;
+    showDialog(
+      context: context,
+      builder: (context) => AlertDialog(
+        title: const Text('Edit Ingredient'),
+        content: Column(
+          mainAxisSize: MainAxisSize.min,
+          children: [
+            TextField(
+              controller: _nameController,
+              decoration: const InputDecoration(labelText: 'Ingredient Name'),
+            ),
+            TextField(
+              controller: _typeController,
+              decoration: const InputDecoration(labelText: 'Type'),
+            ),
+          ],
+        ),
+        actions: [
+          TextButton(
+            onPressed: () {
+              setState(() {
+                final index = _ingredients.indexWhere((ing) => ing.id == ingredient.id);
+                if (index != -1) {
+                  _ingredients[index] = Ingredient(
+                    id: ingredient.id,
+                    name: _nameController.text.trim(),
+                    type: _typeController.text.trim(),
+                  );
+                }
+              });
+              _nameController.clear();
+              _typeController.clear();
+              Navigator.pop(context);
+            },
+            child: const Text('Save'),
+          ),
+          TextButton(
+            onPressed: () {
+              _nameController.clear();
+              _typeController.clear();
+              Navigator.pop(context);
+            },
+            child: const Text('Cancel'),
+          ),
+        ],
+      ),
     );
-    _nameController.clear();
-    _typeController.clear();
+  }
+
+  void _deleteIngredient(String id) {
+    setState(() {
+      _ingredients.removeWhere((ing) => ing.id == id);
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    final service = Provider.of<FirestoreService>(context);
+    final filteredIngredients = _ingredients.where((ing) =>
+      ing.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+      ing.type.toLowerCase().contains(searchQuery.toLowerCase())
+    ).toList();
+
     return Scaffold(
       appBar: AppBar(
         title: const Text('Ingredients'),
       ),
-      body: Column(
-        children: [
-          Padding(
-            padding: const EdgeInsets.all(8.0),
-            child: Row(
+      body: Padding(
+        padding: const EdgeInsets.all(16.0),
+        child: Column(
+          children: [
+            Row(
               children: [
                 Expanded(
                   child: TextField(
                     controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Ingredient Name'),
+                    decoration: const InputDecoration(
+                      labelText: 'Ingredient Name',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _typeController,
-                    decoration: const InputDecoration(labelText: 'Type'),
+                    decoration: const InputDecoration(
+                      labelText: 'Type',
+                      border: OutlineInputBorder(),
+                    ),
                   ),
                 ),
-                IconButton(
-                  icon: const Icon(Icons.add),
+                const SizedBox(width: 8),
+                ElevatedButton(
                   onPressed: _addIngredient,
+                  child: const Icon(Icons.add),
+                  style: ElevatedButton.styleFrom(
+                    shape: const CircleBorder(),
+                    padding: const EdgeInsets.all(16),
+                  ),
                 ),
               ],
             ),
-          ),
-          Padding(
-            padding: const EdgeInsets.symmetric(horizontal: 8.0),
-            child: TextField(
-              decoration: const InputDecoration(labelText: 'Search'),
-              onChanged: (val) => setState(() => searchQuery = val),
-            ),
-          ),
-          Expanded(
-            child: StreamBuilder<List<Ingredient>>(
-              stream: searchQuery.isEmpty
-                  ? service.getIngredients(widget.userId)
-                  : service.searchIngredients(widget.userId, searchQuery),
-              builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
-                final ingredients = snapshot.data!;
-                return ListView.builder(
-                  itemCount: ingredients.length,
-                  itemBuilder: (context, index) {
-                    final ingredient = ingredients[index];
-                    return ListTile(
-                      title: Text(ingredient.name),
-                      subtitle: Text(ingredient.type),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit),
-                            onPressed: () async {
-                              _nameController.text = ingredient.name;
-                              _typeController.text = ingredient.type;
-                              showDialog(
-                                context: context,
-                                builder: (context) {
-                                  return AlertDialog(
-                                    title: const Text('Edit Ingredient'),
-                                    content: Column(
-                                      mainAxisSize: MainAxisSize.min,
-                                      children: [
-                                        TextField(
-                                          controller: _nameController,
-                                          decoration: const InputDecoration(labelText: 'Ingredient Name'),
-                                        ),
-                                        TextField(
-                                          controller: _typeController,
-                                          decoration: const InputDecoration(labelText: 'Type'),
-                                        ),
-                                      ],
-                                    ),
-                                    actions: [
-                                      TextButton(
-                                        onPressed: () async {
-                                          if (_nameController.text.trim().isEmpty) return;
-                                          await service.updateIngredient(
-                                            ingredient.id,
-                                            Ingredient(id: ingredient.id, name: _nameController.text.trim(), type: _typeController.text.trim()),
-                                          );
-                                          _nameController.clear();
-                                          _typeController.clear();
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: const Text('Save'),
-                                      ),
-                                      TextButton(
-                                        onPressed: () {
-                                          _nameController.clear();
-                                          _typeController.clear();
-                                          Navigator.of(context).pop();
-                                        },
-                                        child: const Text('Cancel'),
-                                      ),
-                                    ],
-                                  );
-                                },
-                              );
-                            },
-                          ),
-                          IconButton(
-                            icon: const Icon(Icons.delete),
-                            onPressed: () async {
-                              await service.deleteIngredient(ingredient.id);
-                            },
-                          ),
-                        ],
-                      ),
-                    );
-                  },
-                );
+            const SizedBox(height: 16),
+            TextField(
+              decoration: const InputDecoration(
+                labelText: 'Search',
+                prefixIcon: Icon(Icons.search),
+                border: OutlineInputBorder(),
+              ),
+              onChanged: (value) {
+                setState(() {
+                  searchQuery = value;
+                });
               },
             ),
-          ),
-        ],
+            const SizedBox(height: 16),
+            Expanded(
+              child: filteredIngredients.isEmpty
+                  ? Center(child: Text('No ingredients found'))
+                  : ListView.builder(
+                      itemCount: filteredIngredients.length,
+                      itemBuilder: (context, index) {
+                        final ingredient = filteredIngredients[index];
+                        return Card(
+                          elevation: 4,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
+                          ),
+                          child: ListTile(
+                            title: Text(ingredient.name, style: const TextStyle(fontWeight: FontWeight.bold)),
+                            subtitle: Text(ingredient.type),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(Icons.edit, color: Colors.deepPurple),
+                                  onPressed: () => _editIngredient(ingredient),
+                                ),
+                                IconButton(
+                                  icon: const Icon(Icons.delete, color: Colors.red),
+                                  onPressed: () => _deleteIngredient(ingredient.id),
+                                ),
+                              ],
+                            ),
+                          ),
+                        );
+                      },
+                    ),
+            ),
+          ],
+        ),
       ),
     );
   }
