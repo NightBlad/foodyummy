@@ -11,11 +11,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     return MaterialApp(
-      title: 'Flutter Demo',
+      title: 'Demo Flutter',
       theme: ThemeData(
         colorScheme: ColorScheme.fromSeed(seedColor: Colors.deepPurple),
       ),
-      home: const MyHomePage(title: 'Flutter Demo Home Page'),
+      home: const MyHomePage(title: 'Trang Chủ Demo Flutter'),
     );
   }
 }
@@ -34,7 +34,7 @@ class _MyHomePageState extends State<MyHomePage> {
   final List<Widget> _screens = [
     HomeScreen(),
     IngredientScreen(),
-    MenuScreen(), // Use imported MenuScreen widget
+    MenuScreen(),
     FavoriteScreen(),
     SearchScreen(),
     NotificationScreen(),
@@ -61,12 +61,12 @@ class _MyHomePageState extends State<MyHomePage> {
         currentIndex: _selectedIndex,
         onTap: _onItemTapped,
         items: const [
-          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Home'),
-          BottomNavigationBarItem(icon: Icon(Icons.kitchen), label: 'Ingredients'),
-          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Menu'),
-          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Favorites'),
-          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Search'),
-          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Notify'),
+          BottomNavigationBarItem(icon: Icon(Icons.home), label: 'Trang Chủ'),
+          BottomNavigationBarItem(icon: Icon(Icons.kitchen), label: 'Nguyên Liệu'),
+          BottomNavigationBarItem(icon: Icon(Icons.menu_book), label: 'Thực Đơn'),
+          BottomNavigationBarItem(icon: Icon(Icons.favorite), label: 'Yêu Thích'),
+          BottomNavigationBarItem(icon: Icon(Icons.search), label: 'Tìm Kiếm'),
+          BottomNavigationBarItem(icon: Icon(Icons.notifications), label: 'Thông Báo'),
         ],
       ),
     );
@@ -81,9 +81,9 @@ class HomeScreen extends StatelessWidget {
       child: Column(
         mainAxisAlignment: MainAxisAlignment.center,
         children: [
-          Text('Welcome to Foodyummy!', style: Theme.of(context).textTheme.headlineMedium),
+          Text('Chào mừng đến với Foodyummy!', style: Theme.of(context).textTheme.headlineMedium),
           SizedBox(height: 16),
-          Text('Manage your ingredients, menu, favorites, and more.', style: Theme.of(context).textTheme.bodyLarge),
+          Text('Quản lý nguyên liệu, thực đơn, món yêu thích và hơn thế nữa.', style: Theme.of(context).textTheme.bodyLarge),
         ],
       ),
     );
@@ -93,27 +93,27 @@ class HomeScreen extends StatelessWidget {
 class IngredientScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Ingredient Management'));
+    return Center(child: Text('Quản Lý Nguyên Liệu'));
   }
 }
 
 class FavoriteScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Favorite Dishes'));
+    return Center(child: Text('Món Yêu Thích'));
   }
 }
 
 class SearchScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Search'));
+    return Center(child: Text('Tìm Kiếm'));
   }
 }
 
 class NotificationScreen extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
-    return Center(child: Text('Notifications'));
+    return Center(child: Text('Thông Báo'));
   }
 }

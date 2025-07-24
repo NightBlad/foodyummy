@@ -26,33 +26,33 @@ class _MenuScreenState extends State<MenuScreen> {
   List<Menu> _menus = [
     Menu(
       id: '1',
-      name: 'Lunch Set',
+      name: 'Bữa Trưa',
       type: 'Lunch',
       recipes: [
         Recipe(
           id: 'r1',
-          name: 'Fried Rice',
-          ingredients: ['Rice', 'Egg', 'Carrot', 'Peas'],
-          instructions: 'Stir fry all ingredients together.',
+          name: 'Cơm Chiên',
+          ingredients: ['Gạo', 'Trứng', 'Cà Rốt', 'Đậu Hà Lan'],
+          instructions: 'Xào tất cả các nguyên liệu với nhau.',
         ),
         Recipe(
           id: 'r2',
-          name: 'Tomato Soup',
-          ingredients: ['Tomato', 'Water', 'Salt'],
-          instructions: 'Boil tomatoes, add salt.',
+          name: 'Súp Cà Chua',
+          ingredients: ['Cà Chua', 'Nước', 'Muối'],
+          instructions: 'Luộc cà chua, thêm muối.',
         ),
       ],
     ),
     Menu(
       id: '2',
-      name: 'Dinner Set',
+      name: 'Bữa Tối',
       type: 'Dinner',
       recipes: [
         Recipe(
           id: 'r3',
-          name: 'Grilled Chicken',
-          ingredients: ['Chicken', 'Salt', 'Pepper'],
-          instructions: 'Grill chicken with salt and pepper.',
+          name: 'Gà Nướng',
+          ingredients: ['Gà', 'Muối', 'Tiêu'],
+          instructions: 'Nướng gà với muối và tiêu.',
         ),
       ],
     ),
@@ -60,29 +60,29 @@ class _MenuScreenState extends State<MenuScreen> {
 
   final TextEditingController _menuNameController = TextEditingController();
   String _searchQuery = '';
-  String _selectedType = 'All';
-  final List<String> _mealTypes = ['All', 'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Vegetarian', 'Vegan', 'Vietnamese', 'Western'];
+  String _selectedType = 'Tất Cả';
+  final List<String> _mealTypes = ['Tất Cả', 'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Vegetarian', 'Vegan', 'Vietnamese', 'Western'];
 
   void _addMenu() {
     String _newType = 'Lunch';
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Menu'),
+        title: const Text('Thêm Thực Đơn'),
         content: Column(
           mainAxisSize: MainAxisSize.min,
           children: [
             TextField(
               controller: _menuNameController,
-              decoration: const InputDecoration(labelText: 'Menu Name'),
+              decoration: const InputDecoration(labelText: 'Tên Thực Đơn'),
             ),
             DropdownButtonFormField<String>(
               value: _newType,
-              items: _mealTypes.where((e) => e != 'All').map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
+              items: _mealTypes.where((e) => e != 'Tất Cả').map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
               onChanged: (val) {
                 if (val != null) _newType = val;
               },
-              decoration: const InputDecoration(labelText: 'Meal Type'),
+              decoration: const InputDecoration(labelText: 'Loại Bữa Ăn'),
             ),
           ],
         ),
@@ -102,14 +102,14 @@ class _MenuScreenState extends State<MenuScreen> {
               _menuNameController.clear();
               Navigator.pop(context);
             },
-            child: const Text('Add'),
+            child: const Text('Thêm'),
           ),
           TextButton(
             onPressed: () {
               _menuNameController.clear();
               Navigator.pop(context);
             },
-            child: const Text('Cancel'),
+            child: const Text('Hủy'),
           ),
         ],
       ),
@@ -121,10 +121,10 @@ class _MenuScreenState extends State<MenuScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Edit Menu'),
+        title: const Text('Sửa Thực Đơn'),
         content: TextField(
           controller: _menuNameController,
-          decoration: const InputDecoration(labelText: 'Menu Name'),
+          decoration: const InputDecoration(labelText: 'Tên Thực Đơn'),
         ),
         actions: [
           TextButton(
@@ -143,14 +143,14 @@ class _MenuScreenState extends State<MenuScreen> {
               _menuNameController.clear();
               Navigator.pop(context);
             },
-            child: const Text('Save'),
+            child: const Text('Lưu'),
           ),
           TextButton(
             onPressed: () {
               _menuNameController.clear();
               Navigator.pop(context);
             },
-            child: const Text('Cancel'),
+            child: const Text('Hủy'),
           ),
         ],
       ),
@@ -183,8 +183,8 @@ class _MenuScreenState extends State<MenuScreen> {
                 subtitle: Column(
                   crossAxisAlignment: CrossAxisAlignment.start,
                   children: [
-                    Text('Ingredients: ${recipe.ingredients.join(", ")}'),
-                    Text('Instructions: ${recipe.instructions}'),
+                    Text('Nguyên Liệu: ${recipe.ingredients.join(", ")}'),
+                    Text('Hướng Dẫn: ${recipe.instructions}'),
                   ],
                 ),
               ),
@@ -192,11 +192,11 @@ class _MenuScreenState extends State<MenuScreen> {
             if (menu.recipes.isEmpty)
               const Padding(
                 padding: EdgeInsets.all(16.0),
-                child: Text('No recipes in this menu.'),
+                child: Text('Không có món ăn trong thực đơn này.'),
               ),
             ElevatedButton.icon(
               icon: const Icon(Icons.add),
-              label: const Text('Add Recipe'),
+              label: const Text('Thêm Món Ăn'),
               onPressed: () => _addRecipe(menu),
             ),
           ],
@@ -213,21 +213,21 @@ class _MenuScreenState extends State<MenuScreen> {
     showDialog(
       context: context,
       builder: (context) => AlertDialog(
-        title: const Text('Add Recipe'),
+        title: const Text('Thêm Món Ăn'),
         content: SingleChildScrollView(
           child: Column(
             children: [
               TextField(
                 controller: _recipeNameController,
-                decoration: const InputDecoration(labelText: 'Recipe Name'),
+                decoration: const InputDecoration(labelText: 'Tên Món Ăn'),
               ),
               TextField(
                 controller: _recipeIngredientsController,
-                decoration: const InputDecoration(labelText: 'Ingredients (comma separated)'),
+                decoration: const InputDecoration(labelText: 'Nguyên Liệu (phân cách bằng dấu phẩy)'),
               ),
               TextField(
                 controller: _recipeInstructionsController,
-                decoration: const InputDecoration(labelText: 'Instructions'),
+                decoration: const InputDecoration(labelText: 'Hướng Dẫn'),
               ),
             ],
           ),
@@ -254,7 +254,7 @@ class _MenuScreenState extends State<MenuScreen> {
               }
               _showRecipes(menu);
             },
-            child: const Text('Add'),
+            child: const Text('Thêm'),
           ),
           TextButton(
             onPressed: () {
@@ -263,7 +263,7 @@ class _MenuScreenState extends State<MenuScreen> {
               _recipeInstructionsController.clear();
               Navigator.pop(context);
             },
-            child: const Text('Cancel'),
+            child: const Text('Hủy'),
           ),
         ],
       ),
@@ -273,7 +273,7 @@ class _MenuScreenState extends State<MenuScreen> {
   @override
   Widget build(BuildContext context) {
     List<Menu> filteredMenus = _menus.where((menu) {
-      final matchesType = _selectedType == 'All' || menu.type == _selectedType;
+      final matchesType = _selectedType == 'Tất Cả' || menu.type == _selectedType;
       final matchesSearch = menu.name.toLowerCase().contains(_searchQuery.toLowerCase());
       return matchesType && matchesSearch;
     }).toList();
@@ -284,7 +284,7 @@ class _MenuScreenState extends State<MenuScreen> {
           children: [
             const Icon(Icons.restaurant_menu, color: Colors.white),
             const SizedBox(width: 8),
-            const Text('Foodyummy Menus', style: TextStyle(fontWeight: FontWeight.bold)),
+            const Text('Thực Đơn Foodyummy', style: TextStyle(fontWeight: FontWeight.bold)),
           ],
         ),
         backgroundColor: Colors.deepPurple,
@@ -306,11 +306,11 @@ class _MenuScreenState extends State<MenuScreen> {
               Row(
                 children: [
                   Expanded(
-                    child: Text('Danh sách thực đơn', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.deepPurple, fontWeight: FontWeight.bold)),
+                    child: Text('Danh Sách Thực Đơn', style: Theme.of(context).textTheme.headlineSmall?.copyWith(color: Colors.deepPurple, fontWeight: FontWeight.bold)),
                   ),
                   ElevatedButton.icon(
                     icon: const Icon(Icons.add),
-                    label: const Text('Thêm thực đơn'),
+                    label: const Text('Thêm Thực Đơn'),
                     style: ElevatedButton.styleFrom(
                       backgroundColor: Colors.pinkAccent,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
@@ -357,83 +357,83 @@ class _MenuScreenState extends State<MenuScreen> {
               Expanded(
                 child: filteredMenus.isEmpty
                     ? Column(
-                        mainAxisAlignment: MainAxisAlignment.center,
-                        children: [
-                          Icon(Icons.menu_book, size: 64, color: Colors.deepPurple.shade200),
-                          const SizedBox(height: 16),
-                          const Text('Không có thực đơn nào', style: TextStyle(fontSize: 18, color: Colors.deepPurple)),
-                        ],
-                      )
+                  mainAxisAlignment: MainAxisAlignment.center,
+                  children: [
+                    Icon(Icons.menu_book, size: 64, color: Colors.deepPurple.shade200),
+                    const SizedBox(height: 16),
+                    const Text('Không có thực đơn nào', style: TextStyle(fontSize: 18, color: Colors.deepPurple)),
+                  ],
+                )
                     : GridView.builder(
-                        gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
-                          crossAxisCount: 2,
-                          childAspectRatio: 1.1,
-                          crossAxisSpacing: 16,
-                          mainAxisSpacing: 16,
+                  gridDelegate: const SliverGridDelegateWithFixedCrossAxisCount(
+                    crossAxisCount: 2,
+                    childAspectRatio: 1.1,
+                    crossAxisSpacing: 16,
+                    mainAxisSpacing: 16,
+                  ),
+                  itemCount: filteredMenus.length,
+                  itemBuilder: (context, index) {
+                    final menu = filteredMenus[index];
+                    return GestureDetector(
+                      onTap: () => _showRecipes(menu),
+                      child: AnimatedContainer(
+                        duration: const Duration(milliseconds: 300),
+                        curve: Curves.easeInOut,
+                        decoration: BoxDecoration(
+                          borderRadius: BorderRadius.circular(24),
+                          color: Colors.white,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.deepPurple.withOpacity(0.08),
+                              blurRadius: 8,
+                              offset: const Offset(0, 4),
+                            ),
+                          ],
                         ),
-                        itemCount: filteredMenus.length,
-                        itemBuilder: (context, index) {
-                          final menu = filteredMenus[index];
-                          return GestureDetector(
-                            onTap: () => _showRecipes(menu),
-                            child: AnimatedContainer(
-                              duration: const Duration(milliseconds: 300),
-                              curve: Curves.easeInOut,
-                              decoration: BoxDecoration(
-                                borderRadius: BorderRadius.circular(24),
-                                color: Colors.white,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.deepPurple.withOpacity(0.08),
-                                    blurRadius: 8,
-                                    offset: const Offset(0, 4),
-                                  ),
-                                ],
-                              ),
-                              child: Stack(
-                                children: [
-                                  Positioned(
-                                    top: 12,
-                                    right: 12,
-                                    child: PopupMenuButton<String>(
-                                      icon: const Icon(Icons.more_vert, color: Colors.deepPurple),
-                                      onSelected: (value) {
-                                        if (value == 'edit') _editMenu(menu);
-                                        if (value == 'delete') _deleteMenu(menu.id);
-                                      },
-                                      itemBuilder: (context) => [
-                                        const PopupMenuItem(value: 'edit', child: Text('Sửa')),
-                                        const PopupMenuItem(value: 'delete', child: Text('Xóa')),
-                                      ],
-                                    ),
-                                  ),
-                                  Center(
-                                    child: Column(
-                                      mainAxisAlignment: MainAxisAlignment.center,
-                                      children: [
-                                        Icon(Icons.restaurant_menu, size: 40, color: Colors.deepPurple),
-                                        const SizedBox(height: 8),
-                                        Text(menu.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
-                                        const SizedBox(height: 4),
-                                        Container(
-                                          padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
-                                          decoration: BoxDecoration(
-                                            color: Colors.deepPurple.shade50,
-                                            borderRadius: BorderRadius.circular(8),
-                                          ),
-                                          child: Text(menu.type, style: const TextStyle(color: Colors.deepPurple)),
-                                        ),
-                                        const SizedBox(height: 4),
-                                        Text('${menu.recipes.length} món ăn', style: const TextStyle(color: Colors.pinkAccent)),
-                                      ],
-                                    ),
-                                  ),
+                        child: Stack(
+                          children: [
+                            Positioned(
+                              top: 12,
+                              right: 12,
+                              child: PopupMenuButton<String>(
+                                icon: const Icon(Icons.more_vert, color: Colors.deepPurple),
+                                onSelected: (value) {
+                                  if (value == 'edit') _editMenu(menu);
+                                  if (value == 'delete') _deleteMenu(menu.id);
+                                },
+                                itemBuilder: (context) => [
+                                  const PopupMenuItem(value: 'edit', child: Text('Sửa')),
+                                  const PopupMenuItem(value: 'delete', child: Text('Xóa')),
                                 ],
                               ),
                             ),
-                          );
-                        },
+                            Center(
+                              child: Column(
+                                mainAxisAlignment: MainAxisAlignment.center,
+                                children: [
+                                  Icon(Icons.restaurant_menu, size: 40, color: Colors.deepPurple),
+                                  const SizedBox(height: 8),
+                                  Text(menu.name, style: const TextStyle(fontWeight: FontWeight.bold, fontSize: 18)),
+                                  const SizedBox(height: 4),
+                                  Container(
+                                    padding: const EdgeInsets.symmetric(horizontal: 8, vertical: 4),
+                                    decoration: BoxDecoration(
+                                      color: Colors.deepPurple.shade50,
+                                      borderRadius: BorderRadius.circular(8),
+                                    ),
+                                    child: Text(menu.type, style: const TextStyle(color: Colors.deepPurple)),
+                                  ),
+                                  const SizedBox(height: 4),
+                                  Text('${menu.recipes.length} món ăn', style: const TextStyle(color: Colors.pinkAccent)),
+                                ],
+                              ),
+                            ),
+                          ],
+                        ),
                       ),
+                    );
+                  },
+                ),
               ),
               const SizedBox(height: 8),
               Text('💡 Mẹo: Nhấn vào thực đơn để xem và thêm món ăn!', style: TextStyle(color: Colors.deepPurple.shade400)),

@@ -40,7 +40,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
     }
     return Scaffold(
       appBar: AppBar(
-        title: const Text('Favorites'),
+        title: const Text('Món Yêu Thích'),
       ),
       body: Column(
         children: [
@@ -51,14 +51,14 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                 Expanded(
                   child: TextField(
                     controller: _nameController,
-                    decoration: const InputDecoration(labelText: 'Dish Name'),
+                    decoration: const InputDecoration(labelText: 'Tên Món'),
                   ),
                 ),
                 const SizedBox(width: 8),
                 Expanded(
                   child: TextField(
                     controller: _typeController,
-                    decoration: const InputDecoration(labelText: 'Type'),
+                    decoration: const InputDecoration(labelText: 'Loại'),
                   ),
                 ),
                 IconButton(
@@ -71,7 +71,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
           Padding(
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: TextField(
-              decoration: const InputDecoration(labelText: 'Search'),
+              decoration: const InputDecoration(labelText: 'Tìm Kiếm'),
               onChanged: (val) => setState(() => searchQuery = val),
             ),
           ),
@@ -79,12 +79,12 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             padding: const EdgeInsets.symmetric(horizontal: 8.0),
             child: DropdownButton<String>(
               value: filterType.isEmpty ? null : filterType,
-              hint: const Text('Filter by Type'),
+              hint: const Text('Lọc Theo Loại'),
               items: <String>['', 'Breakfast', 'Vegetarian', 'Vietnamese', 'Western']
                   .map((type) => DropdownMenuItem<String>(
-                        value: type,
-                        child: Text(type.isEmpty ? 'All' : type),
-                      ))
+                value: type,
+                child: Text(type.isEmpty ? 'Tất Cả' : type),
+              ))
                   .toList(),
               onChanged: (val) => setState(() => filterType = val ?? ''),
             ),
@@ -114,17 +114,17 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                 context: context,
                                 builder: (context) {
                                   return AlertDialog(
-                                    title: const Text('Edit Favorite'),
+                                    title: const Text('Sửa Món Yêu Thích'),
                                     content: Column(
                                       mainAxisSize: MainAxisSize.min,
                                       children: [
                                         TextField(
                                           controller: _nameController,
-                                          decoration: const InputDecoration(labelText: 'Dish Name'),
+                                          decoration: const InputDecoration(labelText: 'Tên Món'),
                                         ),
                                         TextField(
                                           controller: _typeController,
-                                          decoration: const InputDecoration(labelText: 'Type'),
+                                          decoration: const InputDecoration(labelText: 'Loại'),
                                         ),
                                       ],
                                     ),
@@ -145,7 +145,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                           _typeController.clear();
                                           Navigator.of(context).pop();
                                         },
-                                        child: const Text('Save'),
+                                        child: const Text('Lưu'),
                                       ),
                                       TextButton(
                                         onPressed: () {
@@ -153,7 +153,7 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                           _typeController.clear();
                                           Navigator.of(context).pop();
                                         },
-                                        child: const Text('Cancel'),
+                                        child: const Text('Hủy'),
                                       ),
                                     ],
                                   );
