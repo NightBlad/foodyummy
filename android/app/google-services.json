@@ -1,0 +1,29 @@
+{
+  "project_info": {
+    "project_number": "267583158426",
+    "project_id": "foodyummy-3d887",
+    "storage_bucket": "foodyummy-3d887.firebasestorage.app"
+  },
+  "client": [
+    {
+      "client_info": {
+        "mobilesdk_app_id": "1:267583158426:android:98feb5e7101d39f9880723",
+        "android_client_info": {
+          "package_name": "com.example.foodyummy"
+        }
+      },
+      "oauth_client": [],
+      "api_key": [
+        {
+          "current_key": "AIzaSyC5KGZpmxC_ep86LiYS4O5eKfGASTzOegU"
+        }
+      ],
+      "services": {
+        "appinvite_service": {
+          "other_platform_oauth_client": []
+        }
+      }
+    }
+  ],
+  "configuration_version": "1"
+}
