@@ -3,6 +3,7 @@ import '../models/user.dart';
 import '../models/recipe.dart';
 import '../models/favorite.dart';
 import '../models/ingredient.dart';
+import '../utils/utf8_config.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -12,7 +13,8 @@ class FirestoreService {
   // Thêm user mới
   Future<void> addUser(AppUser user) async {
     try {
-      await _db.collection('users').doc(user.id).set(user.toMap());
+      final cleanData = UTF8Config.prepareDataForFirestore(user.toMap());
+      await _db.collection('users').doc(user.id).set(cleanData);
     } catch (e) {
       throw Exception('Lỗi khi thêm user: $e');
     }
@@ -25,7 +27,8 @@ class FirestoreService {
       if (doc.exists) {
         final data = doc.data();
         if (data != null) {
-          return AppUser.fromMap(data);
+          final cleanData = UTF8Config.cleanDataFromFirestore(data);
+          return AppUser.fromMap(cleanData);
         }
       }
       return null;
@@ -37,7 +40,8 @@ class FirestoreService {
   // Cập nhật thông tin user
   Future<void> updateUser(AppUser user) async {
     try {
-      await _db.collection('users').doc(user.id).update(user.toMap());
+      final cleanData = UTF8Config.prepareDataForFirestore(user.toMap());
+      await _db.collection('users').doc(user.id).update(cleanData);
     } catch (e) {
       throw Exception('Lỗi khi cập nhật user: $e');
     }
@@ -49,7 +53,8 @@ class FirestoreService {
     Map<String, dynamic> data,
   ) async {
     try {
-      await _db.collection('users').doc(userId).update(data);
+      final cleanData = UTF8Config.prepareDataForFirestore(data);
+      await _db.collection('users').doc(userId).update(cleanData);
     } catch (e) {
       throw Exception('Lỗi khi cập nhật user: $e');
     }
@@ -60,9 +65,17 @@ class FirestoreService {
   // Thêm công thức nấu ăn mới
   Future<String> addRecipe(Recipe recipe) async {
     try {
+      // Validate imageUrl trước khi lưu
+      final recipeData = UTF8Config.prepareDataForFirestore(recipe.toMap());
+      if (recipeData['imageUrl'] == null ||
+          recipeData['imageUrl'].toString().isEmpty ||
+          recipeData['imageUrl'].toString().length < 5) {
+        recipeData['imageUrl'] = ''; // Set empty string thay vì null
+      }
+
       DocumentReference docRef = await _db
           .collection('recipes')
-          .add(recipe.toMap());
+          .add(recipeData);
 
       // Cập nhật ID của recipe
       await docRef.update({'id': docRef.id});
@@ -73,15 +86,17 @@ class FirestoreService {
     }
   }
 
-  // Lấy tất cả công th��c
+  // Lấy tất cả công thức
   Stream<List<Recipe>> getRecipes() {
     return _db
         .collection('recipes')
         .orderBy('createdAt', descending: true)
         .snapshots()
         .map(
-          (snapshot) =>
-              snapshot.docs.map((doc) => Recipe.fromMap(doc.data())).toList(),
+          (snapshot) => snapshot.docs.map((doc) {
+            final cleanData = UTF8Config.cleanDataFromFirestore(doc.data());
+            return Recipe.fromMap(cleanData);
+          }).toList(),
         );
   }
 
@@ -93,7 +108,9 @@ class FirestoreService {
           .doc(recipeId)
           .get();
       if (doc.exists) {
-        return Recipe.fromMap(doc.data() as Map<String, dynamic>);
+        final data = doc.data() as Map<String, dynamic>;
+        final cleanData = UTF8Config.cleanDataFromFirestore(data);
+        return Recipe.fromMap(cleanData);
       }
       return null;
     } catch (e) {
@@ -104,7 +121,8 @@ class FirestoreService {
   // Cập nhật công thức
   Future<void> updateRecipe(Recipe recipe) async {
     try {
-      await _db.collection('recipes').doc(recipe.id).update(recipe.toMap());
+      final cleanData = UTF8Config.prepareDataForFirestore(recipe.toMap());
+      await _db.collection('recipes').doc(recipe.id).update(cleanData);
     } catch (e) {
       throw Exception('Lỗi khi cập nhật công thức: $e');
     }

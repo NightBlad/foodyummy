@@ -1,7 +1,11 @@
+import 'dart:io';
 import 'package:flutter/material.dart';
 import 'package:firebase_auth/firebase_auth.dart';
+import 'package:image_picker/image_picker.dart';
 import '../models/recipe.dart';
 import '../services/firestore_service.dart';
+import '../services/local_image_service.dart';
+import '../widgets/hybrid_image_widget.dart';
 
 class AddRecipeScreen extends StatefulWidget {
   final Recipe? recipe; // null = thêm mới, có giá trị = chỉnh sửa
@@ -14,14 +18,18 @@ class AddRecipeScreen extends StatefulWidget {
 
 class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final FirestoreService _firestoreService = FirestoreService();
+  final ImagePicker _imagePicker = ImagePicker();
   final _formKey = GlobalKey<FormState>();
 
   // Controllers
   final TextEditingController _titleController = TextEditingController();
   final TextEditingController _descriptionController = TextEditingController();
-  final TextEditingController _imageUrlController = TextEditingController();
   final TextEditingController _cookingTimeController = TextEditingController();
   final TextEditingController _servingsController = TextEditingController();
+
+  // Image handling
+  File? _selectedImage;
+  String? _currentImageUrl;
 
   // Lists
   List<TextEditingController> _ingredientControllers = [
@@ -65,7 +73,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     final recipe = widget.recipe!;
     _titleController.text = recipe.title;
     _descriptionController.text = recipe.description;
-    _imageUrlController.text = recipe.imageUrl;
+    _currentImageUrl = recipe.imageUrl; // Load current image URL
     _cookingTimeController.text = recipe.cookingTime.toString();
     _servingsController.text = recipe.servings.toString();
     _selectedCategory = recipe.category;
@@ -93,7 +101,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   void dispose() {
     _titleController.dispose();
     _descriptionController.dispose();
-    _imageUrlController.dispose();
     _cookingTimeController.dispose();
     _servingsController.dispose();
 
@@ -108,6 +115,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   Future<void> _saveRecipe() async {
     if (!_formKey.currentState!.validate()) return;
+
+    // Kiểm tra xem có ảnh được chọn không (cho recipe mới)
+    if (widget.recipe == null && _selectedImage == null && (_currentImageUrl == null || _currentImageUrl!.isEmpty)) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        const SnackBar(
+          content: Text('Vui lòng chọn ảnh cho món ăn'),
+          backgroundColor: Colors.orange,
+        ),
+      );
+      return;
+    }
 
     final user = FirebaseAuth.instance.currentUser;
     if (user == null) return;
@@ -127,11 +145,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           .where((text) => text.isNotEmpty)
           .toList();
 
+      String imageUrl = _currentImageUrl ?? '';
+
+      // Upload ảnh mới nếu có
+      if (_selectedImage != null) {
+        imageUrl = await LocalImageService.uploadImage(_selectedImage!);
+      }
+
       final recipe = Recipe(
         id: widget.recipe?.id ?? '',
         title: _titleController.text.trim(),
         description: _descriptionController.text.trim(),
-        imageUrl: _imageUrlController.text.trim(),
+        imageUrl: imageUrl,
         ingredients: ingredients,
         instructions: instructions,
         category: _selectedCategory,
@@ -148,34 +173,61 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       if (widget.recipe == null) {
         // Thêm mới
         await _firestoreService.addRecipe(recipe);
-        ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã thêm công thức thành công!'),
-            backgroundColor: Colors.green,
-          ),
-        );
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đã thêm công thức thành công!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          await Future.delayed(const Duration(milliseconds: 500));
+          Navigator.pop(context, true);
+        }
       } else {
         // Cập nhật
         await _firestoreService.updateRecipe(recipe);
+        if (mounted) {
+          ScaffoldMessenger.of(context).showSnackBar(
+            const SnackBar(
+              content: Text('Đã cập nhật công thức thành công!'),
+              backgroundColor: Colors.green,
+              duration: Duration(seconds: 2),
+            ),
+          );
+          await Future.delayed(const Duration(milliseconds: 500));
+          Navigator.pop(context, true);
+        }
+      }
+    } catch (e) {
+      if (mounted) {
         ScaffoldMessenger.of(context).showSnackBar(
-          const SnackBar(
-            content: Text('Đã cập nhật công thức thành công!'),
-            backgroundColor: Colors.green,
+          SnackBar(
+            content: Text('Lỗi: ${e.toString()}'),
+            backgroundColor: Colors.red,
+            duration: const Duration(seconds: 3),
           ),
         );
       }
-
-      Navigator.pop(context);
-    } catch (e) {
-      ScaffoldMessenger.of(context).showSnackBar(
-        SnackBar(
-          content: Text('Lỗi: ${e.toString()}'),
-          backgroundColor: Colors.red,
-        ),
-      );
     } finally {
+      if (mounted) {
+        setState(() {
+          _isLoading = false;
+        });
+      }
+    }
+  }
+
+  Future<void> _pickImage() async {
+    final pickedFile = await _imagePicker.pickImage(
+      source: ImageSource.gallery,
+      imageQuality: 80,
+    );
+
+    if (pickedFile != null) {
       setState(() {
-        _isLoading = false;
+        _selectedImage = File(pickedFile.path);
+        _currentImageUrl = null; // Clear current image URL
       });
     }
   }
@@ -337,11 +389,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           ),
           const SizedBox(height: 16),
 
-          _buildTextField(
-            controller: _imageUrlController,
-            label: 'URL hình ảnh',
-            icon: Icons.image,
-          ),
+          // Thêm Image Picker
+          _buildImagePicker(),
           const SizedBox(height: 16),
 
           Row(
@@ -380,6 +429,63 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
+  Widget _buildImagePicker() {
+    return GestureDetector(
+      onTap: _pickImage,
+      child: Container(
+        height: 150,
+        width: double.infinity,
+        decoration: BoxDecoration(
+          color: Colors.grey[200],
+          borderRadius: BorderRadius.circular(20),
+          border: Border.all(
+            color: const Color(0xFFFF6B6B),
+            width: 2,
+          ),
+        ),
+        child: ClipRRect(
+          borderRadius: BorderRadius.circular(20),
+          child: _selectedImage != null
+              ? Image.file(
+                  _selectedImage!,
+                  fit: BoxFit.cover,
+                  width: double.infinity,
+                )
+              : _currentImageUrl != null && _currentImageUrl!.isNotEmpty
+                  ? HybridImageWidget(
+                      imagePath: _currentImageUrl!,
+                      fit: BoxFit.cover,
+                      width: double.infinity,
+                      height: 150,
+                    )
+                  : _buildImagePlaceholder(),
+        ),
+      ),
+    );
+  }
+
+  Widget _buildImagePlaceholder() {
+    return const Column(
+      mainAxisAlignment: MainAxisAlignment.center,
+      children: [
+        Icon(
+          Icons.camera_alt,
+          color: Color(0xFFFF6B6B),
+          size: 40,
+        ),
+        SizedBox(height: 8),
+        Text(
+          'Nhấn để chọn ảnh',
+          style: TextStyle(
+            color: Color(0xFFFF6B6B),
+            fontSize: 16,
+            fontWeight: FontWeight.w500,
+          ),
+        ),
+      ],
+    );
+  }
+
   Widget _buildTextField({
     required TextEditingController controller,
     required String label,
@@ -393,6 +499,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
+      // Cấu hình đầy đủ để hỗ trợ tiếng Việt
+      enableIMEPersonalizedLearning: true,
+      textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
+      autocorrect: true,
+      enableSuggestions: true,
+      textCapitalization: TextCapitalization.sentences,
       decoration: InputDecoration(
         labelText: label,
         prefixIcon: Icon(icon, color: const Color(0xFFFF6B6B)),
@@ -402,8 +514,39 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ),
         filled: true,
         fillColor: Colors.grey[50],
+        hintText: _getHintText(label),
+        // Thêm style cho text tiếng Việt
+        labelStyle: const TextStyle(
+          fontFamily: 'Roboto',
+          fontWeight: FontWeight.w400,
+        ),
+        hintStyle: TextStyle(
+          color: Colors.grey[600],
+          fontFamily: 'Roboto',
+        ),
+      ),
+      // Thêm style cho text nhập vào
+      style: const TextStyle(
+        fontFamily: 'Roboto',
+        fontSize: 16,
+        fontWeight: FontWeight.w400,
       ),
     );
+  }
+
+  String _getHintText(String label) {
+    switch (label) {
+      case 'Tên món ăn':
+        return 'Ví dụ: Phở bò, Bánh mì thịt...';
+      case 'Mô tả':
+        return 'Mô tả chi tiết về món ăn...';
+      case 'Thời gian (phút)':
+        return '30';
+      case 'Số người ăn':
+        return '4';
+      default:
+        return '';
+    }
   }
 
   Widget _buildCategoryDropdown() {
@@ -485,8 +628,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _ingredientControllers[index],
+                      // Thêm hỗ trợ tiếng Việt
+                      enableIMEPersonalizedLearning: true,
+                      textInputAction: TextInputAction.next,
                       decoration: InputDecoration(
                         labelText: 'Nguyên liệu ${index + 1}',
+                        hintText: 'Ví dụ: 500g thịt bò, 2 quả cà chua...',
                         prefixIcon: const Icon(
                           Icons.kitchen,
                           color: Color(0xFFFF6B6B),
@@ -570,8 +717,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     child: TextFormField(
                       controller: _instructionControllers[index],
                       maxLines: 3,
+                      // Thêm hỗ trợ tiếng Việt
+                      enableIMEPersonalizedLearning: true,
+                      textInputAction: TextInputAction.newline,
                       decoration: InputDecoration(
                         labelText: 'Bước ${index + 1}',
+                        hintText: 'Ví dụ: Rửa sạch thịt, cắt thành miếng vừa ăn...',
                         prefixIcon: const Icon(
                           Icons.list_alt,
                           color: Color(0xFFFF6B6B),
