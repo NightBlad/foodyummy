@@ -71,10 +71,10 @@ class _IngredientManagementScreenState
                 final ingredients = snapshot.data!.docs
                     .map(
                       (doc) => Ingredient.fromMap(
-                        doc.data() as Map<String, dynamic>,
-                        doc.id,
-                      ),
-                    )
+                    doc.data() as Map<String, dynamic>,
+                    doc.id,
+                  ),
+                )
                     .toList();
                 if (ingredients.isEmpty) {
                   return const Center(child: Text('Không có nguyên liệu nào.'));

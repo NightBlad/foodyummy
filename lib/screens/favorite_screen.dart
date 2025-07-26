@@ -86,20 +86,20 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
               value: filterType.isEmpty ? null : filterType,
               hint: const Text('Lọc Theo Loại'),
               items:
-                  <String>[
-                        '',
-                        'Breakfast',
-                        'Vegetarian',
-                        'Vietnamese',
-                        'Western',
-                      ]
-                      .map(
-                        (type) => DropdownMenuItem<String>(
-                          value: type,
-                          child: Text(type.isEmpty ? 'Tất Cả' : type),
-                        ),
-                      )
-                      .toList(),
+              <String>[
+                '',
+                'Breakfast',
+                'Vegetarian',
+                'Vietnamese',
+                'Western',
+              ]
+                  .map(
+                    (type) => DropdownMenuItem<String>(
+                  value: type,
+                  child: Text(type.isEmpty ? 'Tất Cả' : type),
+                ),
+              )
+                  .toList(),
               onChanged: (val) => setState(() => filterType = val ?? ''),
             ),
           ),

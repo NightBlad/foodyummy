@@ -3,6 +3,7 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
 import '../models/user.dart';
 import '../services/firestore_service.dart';
+import '../widgets/hybrid_image_widget.dart';
 import 'recipe_detail_screen.dart';
 import 'add_recipe_screen.dart';
 import 'admin_panel_screen.dart';
@@ -62,9 +63,11 @@ class _RecipeScreenState extends State<RecipeScreen>
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final userData = await _firestoreService.getUser(user.uid);
-      setState(() {
-        _currentUser = userData;
-      });
+      if (mounted) { // Kiểm tra widget còn mounted trước khi setState
+        setState(() {
+          _currentUser = userData;
+        });
+      }
     }
   }
 
@@ -103,21 +106,34 @@ class _RecipeScreenState extends State<RecipeScreen>
             ElevatedButton(
               onPressed: () async {
                 if (nameController.text.trim().isEmpty) return;
-                await _firestoreService.updateUserFields(_currentUser!.id, {
-                  'name': nameController.text.trim(),
-                });
-                setState(() {
-                  _currentUser = _currentUser!.copyWith(
-                    name: nameController.text.trim(),
-                  );
-                });
-                Navigator.of(context).pop();
-                ScaffoldMessenger.of(context).showSnackBar(
-                  const SnackBar(
-                    content: Text('Cập nhật thành công!'),
-                    backgroundColor: Colors.green,
-                  ),
-                );
+                try {
+                  await _firestoreService.updateUserFields(_currentUser!.id, {
+                    'name': nameController.text.trim(),
+                  });
+                  if (mounted) {
+                    setState(() {
+                      _currentUser = _currentUser!.copyWith(
+                        name: nameController.text.trim(),
+                      );
+                    });
+                    Navigator.of(context).pop();
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      const SnackBar(
+                        content: Text('Cập nhật thành công!'),
+                        backgroundColor: Colors.green,
+                      ),
+                    );
+                  }
+                } catch (e) {
+                  if (mounted) {
+                    ScaffoldMessenger.of(context).showSnackBar(
+                      SnackBar(
+                        content: Text('Lỗi cập nhật: $e'),
+                        backgroundColor: Colors.red,
+                      ),
+                    );
+                  }
+                }
               },
               child: const Text('Lưu'),
             ),
@@ -139,10 +155,10 @@ class _RecipeScreenState extends State<RecipeScreen>
             gradient: Theme.of(context).brightness == Brightness.dark
                 ? null
                 : const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
-                  ),
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
+            ),
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.grey[900]
                 : null,
@@ -263,14 +279,14 @@ class _RecipeScreenState extends State<RecipeScreen>
           prefixIcon: const Icon(Icons.search, color: Color(0xFFFF6B6B)),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() {
-                      _searchQuery = '';
-                    });
-                  },
-                )
+            icon: const Icon(Icons.clear, color: Colors.grey),
+            onPressed: () {
+              _searchController.clear();
+              setState(() {
+                _searchQuery = '';
+              });
+            },
+          )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -358,6 +374,7 @@ class _RecipeScreenState extends State<RecipeScreen>
 
   Widget _buildRecipeList() {
     return StreamBuilder<List<Recipe>>(
+      key: ValueKey('${_searchQuery}_${_selectedCategory}'), // Key để force rebuild khi filter thay đổi
       stream: _searchQuery.isNotEmpty
           ? _firestoreService.searchRecipes(_searchQuery)
           : _selectedCategory == 'Tất cả'
@@ -373,7 +390,13 @@ class _RecipeScreenState extends State<RecipeScreen>
         }
 
         if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          return _buildEmptyState();
+          String message = 'Không có công thức nào';
+          if (_searchQuery.isNotEmpty) {
+            message = 'Không tìm thấy công thức cho "$_searchQuery"';
+          } else if (_selectedCategory != 'Tất cả') {
+            message = 'Chưa có công thức nào trong danh mục "$_selectedCategory"';
+          }
+          return _buildEmptyState(message: message);
         }
 
         return Column(
@@ -427,19 +450,19 @@ class _RecipeScreenState extends State<RecipeScreen>
               Container(
                 height: 200,
                 width: double.infinity,
-                decoration: BoxDecoration(
-                  color: Colors.grey[200],
-                  image: recipe.imageUrl.isNotEmpty
-                      ? DecorationImage(
-                          image: NetworkImage(recipe.imageUrl),
-                          fit: BoxFit.cover,
-                        )
-                      : null,
-                ),
-                child: recipe.imageUrl.isEmpty
-                    ? const Icon(Icons.restaurant, size: 50, color: Colors.grey)
-                    : Stack(
+                child: recipe.imageUrl.isNotEmpty
+                    ? Stack(
                         children: [
+                          HybridImageWidget(
+                            imagePath: recipe.imageUrl,
+                            width: double.infinity,
+                            height: 200,
+                            fit: BoxFit.cover,
+                            errorWidget: Container(
+                              color: Colors.grey[200],
+                              child: const Icon(Icons.restaurant, size: 50, color: Colors.grey),
+                            ),
+                          ),
                           Positioned(
                             top: 10,
                             right: 10,
@@ -458,9 +481,9 @@ class _RecipeScreenState extends State<RecipeScreen>
                               child: IconButton(
                                 icon: Icon(
                                   _currentUser?.favoriteRecipes.contains(
-                                            recipe.id,
-                                          ) ==
-                                          true
+                                    recipe.id,
+                                  ) ==
+                                      true
                                       ? Icons.favorite
                                       : Icons.favorite_border,
                                   color: const Color(0xFFFF6B6B),
@@ -477,6 +500,10 @@ class _RecipeScreenState extends State<RecipeScreen>
                             ),
                           ),
                         ],
+                      )
+                    : Container(
+                        color: Colors.grey[200],
+                        child: const Icon(Icons.restaurant, size: 50, color: Colors.grey),
                       ),
               ),
 
@@ -741,7 +768,10 @@ class _RecipeScreenState extends State<RecipeScreen>
                     icon: const Icon(Icons.admin_panel_settings),
                     label: const Text('Chức năng Admin'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
+                      backgroundColor:
+                          Theme.of(context).brightness == Brightness.dark
+                          ? Colors.deepPurple
+                          : Colors.black,
                     ),
                     onPressed: () {
                       Navigator.of(context).push(

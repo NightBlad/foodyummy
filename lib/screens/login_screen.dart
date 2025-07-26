@@ -72,9 +72,9 @@ class _LoginScreenState extends State<LoginScreen> {
     try {
       UserCredential userCredential = await _auth
           .createUserWithEmailAndPassword(
-            email: emailController.text.trim(),
-            password: passwordController.text,
-          );
+        email: emailController.text.trim(),
+        password: passwordController.text,
+      );
 
       // Tạo user trong Firestore
       await _firestoreService.addUser(
@@ -286,22 +286,22 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           child: isLoading
                               ? const SizedBox(
-                                  height: 20,
-                                  width: 20,
-                                  child: CircularProgressIndicator(
-                                    strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(
-                                      Colors.white,
-                                    ),
-                                  ),
-                                )
+                            height: 20,
+                            width: 20,
+                            child: CircularProgressIndicator(
+                              strokeWidth: 2,
+                              valueColor: AlwaysStoppedAnimation<Color>(
+                                Colors.white,
+                              ),
+                            ),
+                          )
                               : Text(
-                                  isLoginMode ? 'Đăng nhập' : 'Đăng ký',
-                                  style: const TextStyle(
-                                    fontSize: 16,
-                                    fontWeight: FontWeight.bold,
-                                  ),
-                                ),
+                            isLoginMode ? 'Đăng nhập' : 'Đăng ký',
+                            style: const TextStyle(
+                              fontSize: 16,
+                              fontWeight: FontWeight.bold,
+                            ),
+                          ),
                         ),
                       ),
 
