@@ -204,17 +204,17 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           children: [
             widget.recipe.imageUrl.isNotEmpty
                 ? Image.network(
-                    widget.recipe.imageUrl,
-                    fit: BoxFit.cover,
-                    errorBuilder: (context, error, stackTrace) => Container(
-                      color: Colors.grey[300],
-                      child: const Icon(Icons.restaurant, size: 100, color: Colors.grey),
-                    ),
-                  )
+              widget.recipe.imageUrl,
+              fit: BoxFit.cover,
+              errorBuilder: (context, error, stackTrace) => Container(
+                color: Colors.grey[300],
+                child: const Icon(Icons.restaurant, size: 100, color: Colors.grey),
+              ),
+            )
                 : Container(
-                    color: Colors.grey[300],
-                    child: const Icon(Icons.restaurant, size: 100, color: Colors.grey),
-                  ),
+              color: Colors.grey[300],
+              child: const Icon(Icons.restaurant, size: 100, color: Colors.grey),
+            ),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
@@ -554,14 +554,14 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           backgroundColor: _isFavorite ? const Color(0xFFFF6B6B) : Colors.white,
           child: _isLoading
               ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(strokeWidth: 2),
+          )
               : Icon(
-                  _isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: _isFavorite ? Colors.white : const Color(0xFFFF6B6B),
-                ),
+            _isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: _isFavorite ? Colors.white : const Color(0xFFFF6B6B),
+          ),
         ),
         const SizedBox(height: 16),
         FloatingActionButton.extended(

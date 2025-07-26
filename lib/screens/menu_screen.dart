@@ -139,10 +139,10 @@ class _RecipeScreenState extends State<RecipeScreen>
             gradient: Theme.of(context).brightness == Brightness.dark
                 ? null
                 : const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
-                  ),
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
+            ),
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.grey[900]
                 : null,
@@ -263,14 +263,14 @@ class _RecipeScreenState extends State<RecipeScreen>
           prefixIcon: const Icon(Icons.search, color: Color(0xFFFF6B6B)),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: const Icon(Icons.clear, color: Colors.grey),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() {
-                      _searchQuery = '';
-                    });
-                  },
-                )
+            icon: const Icon(Icons.clear, color: Colors.grey),
+            onPressed: () {
+              _searchController.clear();
+              setState(() {
+                _searchQuery = '';
+              });
+            },
+          )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -431,53 +431,53 @@ class _RecipeScreenState extends State<RecipeScreen>
                   color: Colors.grey[200],
                   image: recipe.imageUrl.isNotEmpty
                       ? DecorationImage(
-                          image: NetworkImage(recipe.imageUrl),
-                          fit: BoxFit.cover,
-                        )
+                    image: NetworkImage(recipe.imageUrl),
+                    fit: BoxFit.cover,
+                  )
                       : null,
                 ),
                 child: recipe.imageUrl.isEmpty
                     ? const Icon(Icons.restaurant, size: 50, color: Colors.grey)
                     : Stack(
-                        children: [
-                          Positioned(
-                            top: 10,
-                            right: 10,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    spreadRadius: 1,
-                                    blurRadius: 5,
-                                  ),
-                                ],
-                              ),
-                              child: IconButton(
-                                icon: Icon(
-                                  _currentUser?.favoriteRecipes.contains(
-                                            recipe.id,
-                                          ) ==
-                                          true
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color: const Color(0xFFFF6B6B),
-                                ),
-                                onPressed: () {
-                                  if (_currentUser != null) {
-                                    _firestoreService.toggleFavoriteRecipe(
-                                      _currentUser!.id,
-                                      recipe.id,
-                                    );
-                                  }
-                                },
-                              ),
+                  children: [
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              spreadRadius: 1,
+                              blurRadius: 5,
                             ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            _currentUser?.favoriteRecipes.contains(
+                              recipe.id,
+                            ) ==
+                                true
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: const Color(0xFFFF6B6B),
                           ),
-                        ],
+                          onPressed: () {
+                            if (_currentUser != null) {
+                              _firestoreService.toggleFavoriteRecipe(
+                                _currentUser!.id,
+                                recipe.id,
+                              );
+                            }
+                          },
+                        ),
                       ),
+                    ),
+                  ],
+                ),
               ),
 
               // Recipe info
