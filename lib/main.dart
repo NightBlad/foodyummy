@@ -132,7 +132,7 @@ class MyApp extends StatelessWidget {
 class CustomZoomPageTransitionsBuilder extends PageTransitionsBuilder {
   final Duration duration;
   const CustomZoomPageTransitionsBuilder({
-    this.duration = const Duration(milliseconds: 600),
+    this.duration = const Duration(milliseconds: 1000),
   });
 
   @override

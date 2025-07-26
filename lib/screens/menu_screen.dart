@@ -741,7 +741,10 @@ class _RecipeScreenState extends State<RecipeScreen>
                     icon: const Icon(Icons.admin_panel_settings),
                     label: const Text('Chức năng Admin'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor: Colors.deepPurple,
+                      backgroundColor:
+                          Theme.of(context).brightness == Brightness.dark
+                          ? Colors.deepPurple
+                          : Colors.black,
                     ),
                     onPressed: () {
                       Navigator.of(context).push(
