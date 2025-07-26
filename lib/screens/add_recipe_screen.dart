@@ -375,7 +375,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             label: 'Tên món ăn',
             icon: Icons.restaurant_menu,
             validator: (value) =>
-                value?.isEmpty == true ? 'Vui lòng nhập tên món ăn' : null,
+            value?.isEmpty == true ? 'Vui lòng nhập tên món ăn' : null,
           ),
           const SizedBox(height: 16),
 
@@ -385,7 +385,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             icon: Icons.description,
             maxLines: 3,
             validator: (value) =>
-                value?.isEmpty == true ? 'Vui lòng nhập mô tả' : null,
+            value?.isEmpty == true ? 'Vui lòng nhập mô tả' : null,
           ),
           const SizedBox(height: 16),
 
@@ -402,7 +402,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   icon: Icons.access_time,
                   keyboardType: TextInputType.number,
                   validator: (value) =>
-                      value?.isEmpty == true ? 'Nhập thời gian' : null,
+                  value?.isEmpty == true ? 'Nhập thời gian' : null,
                 ),
               ),
               const SizedBox(width: 16),
@@ -413,7 +413,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   icon: Icons.people,
                   keyboardType: TextInputType.number,
                   validator: (value) =>
-                      value?.isEmpty == true ? 'Nhập số người' : null,
+                  value?.isEmpty == true ? 'Nhập số người' : null,
                 ),
               ),
             ],
@@ -854,29 +854,29 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         ),
         child: _isLoading
             ? const SizedBox(
-                height: 20,
-                width: 20,
-                child: CircularProgressIndicator(
-                  strokeWidth: 2,
-                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
-                ),
-              )
+          height: 20,
+          width: 20,
+          child: CircularProgressIndicator(
+            strokeWidth: 2,
+            valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+          ),
+        )
             : Row(
-                mainAxisAlignment: MainAxisAlignment.center,
-                children: [
-                  Icon(widget.recipe == null ? Icons.add : Icons.save),
-                  const SizedBox(width: 8),
-                  Text(
-                    widget.recipe == null
-                        ? 'Thêm công thức'
-                        : 'Cập nhật công thức',
-                    style: const TextStyle(
-                      fontSize: 16,
-                      fontWeight: FontWeight.bold,
-                    ),
-                  ),
-                ],
+          mainAxisAlignment: MainAxisAlignment.center,
+          children: [
+            Icon(widget.recipe == null ? Icons.add : Icons.save),
+            const SizedBox(width: 8),
+            Text(
+              widget.recipe == null
+                  ? 'Thêm công thức'
+                  : 'Cập nhật công thức',
+              style: const TextStyle(
+                fontSize: 16,
+                fontWeight: FontWeight.bold,
               ),
+            ),
+          ],
+        ),
       ),
     );
   }
