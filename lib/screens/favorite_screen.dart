@@ -1,11 +1,10 @@
 import 'package:flutter/material.dart';
-import 'package:provider/provider.dart';
 import '../models/favorite.dart';
 import '../services/firestore_service.dart';
 
 class FavoriteScreen extends StatefulWidget {
   final String userId;
-  const FavoriteScreen({Key? key, required this.userId}) : super(key: key);
+  const FavoriteScreen({super.key, required this.userId});
 
   @override
   State<FavoriteScreen> createState() => _FavoriteScreenState();
@@ -19,9 +18,14 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
   void _addFavorite() async {
     if (_nameController.text.trim().isEmpty) return;
-    final service = Provider.of<FirestoreService>(context, listen: false);
+    final service = FirestoreService();
     await service.addFavorite(
-      Favorite(id: '', name: _nameController.text.trim(), type: _typeController.text.trim(), userId: widget.userId),
+      Favorite(
+        id: '',
+        name: _nameController.text.trim(),
+        type: _typeController.text.trim(),
+        userId: widget.userId,
+      ),
     );
     _nameController.clear();
     _typeController.clear();
@@ -29,19 +33,20 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final service = Provider.of<FirestoreService>(context);
+    final service = FirestoreService();
     Stream<List<Favorite>> favoritesStream;
     if (searchQuery.isNotEmpty) {
       favoritesStream = service.searchFavorites(widget.userId, searchQuery);
     } else if (filterType.isNotEmpty) {
-      favoritesStream = service.filterFavoritesByType(widget.userId, filterType);
+      favoritesStream = service.filterFavoritesByType(
+        widget.userId,
+        filterType,
+      );
     } else {
       favoritesStream = service.getFavorites(widget.userId);
     }
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Món Yêu Thích'),
-      ),
+      appBar: AppBar(title: const Text('Món Yêu Thích')),
       body: Column(
         children: [
           Padding(
@@ -80,12 +85,21 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             child: DropdownButton<String>(
               value: filterType.isEmpty ? null : filterType,
               hint: const Text('Lọc Theo Loại'),
-              items: <String>['', 'Breakfast', 'Vegetarian', 'Vietnamese', 'Western']
-                  .map((type) => DropdownMenuItem<String>(
-                value: type,
-                child: Text(type.isEmpty ? 'Tất Cả' : type),
-              ))
-                  .toList(),
+              items:
+                  <String>[
+                        '',
+                        'Breakfast',
+                        'Vegetarian',
+                        'Vietnamese',
+                        'Western',
+                      ]
+                      .map(
+                        (type) => DropdownMenuItem<String>(
+                          value: type,
+                          child: Text(type.isEmpty ? 'Tất Cả' : type),
+                        ),
+                      )
+                      .toList(),
               onChanged: (val) => setState(() => filterType = val ?? ''),
             ),
           ),
@@ -93,7 +107,8 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
             child: StreamBuilder<List<Favorite>>(
               stream: favoritesStream,
               builder: (context, snapshot) {
-                if (!snapshot.hasData) return const Center(child: CircularProgressIndicator());
+                if (!snapshot.hasData)
+                  return const Center(child: CircularProgressIndicator());
                 final favorites = snapshot.data!;
                 return ListView.builder(
                   itemCount: favorites.length,
@@ -120,18 +135,25 @@ class _FavoriteScreenState extends State<FavoriteScreen> {
                                       children: [
                                         TextField(
                                           controller: _nameController,
-                                          decoration: const InputDecoration(labelText: 'Tên Món'),
+                                          decoration: const InputDecoration(
+                                            labelText: 'Tên Món',
+                                          ),
                                         ),
                                         TextField(
                                           controller: _typeController,
-                                          decoration: const InputDecoration(labelText: 'Loại'),
+                                          decoration: const InputDecoration(
+                                            labelText: 'Loại',
+                                          ),
                                         ),
                                       ],
                                     ),
                                     actions: [
                                       TextButton(
                                         onPressed: () async {
-                                          if (_nameController.text.trim().isEmpty) return;
+                                          if (_nameController.text
+                                              .trim()
+                                              .isEmpty)
+                                            return;
                                           await service.updateFavorite(
                                             favorite.id,
                                             Favorite(

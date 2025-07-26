@@ -1,7 +1,7 @@
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:flutter/material.dart';
-import 'services/firestore_service.dart';
-import 'models/user.dart';
+import '../services/firestore_service.dart';
+import '../models/user.dart';
 
 class LoginScreen extends StatefulWidget {
   const LoginScreen({super.key});
@@ -35,19 +35,26 @@ class _LoginScreenState extends State<LoginScreen> {
       );
 
       // Kiểm tra xem user đã có trong Firestore chưa
-      AppUser? existingUser = await _firestoreService.getUser(userCredential.user!.uid);
+      AppUser? existingUser = await _firestoreService.getUser(
+        userCredential.user!.uid,
+      );
       if (existingUser == null) {
         // Tạo user mới trong Firestore
-        await _firestoreService.addUser(AppUser(
+        existingUser = AppUser(
           id: userCredential.user!.uid,
           email: emailController.text.trim(),
-          name: nameController.text.trim().isEmpty ? 'User' : nameController.text.trim(),
+          name: nameController.text.trim().isEmpty
+              ? 'User'
+              : nameController.text.trim(),
           createdAt: DateTime.now(),
-        ));
+        );
+        await _firestoreService.addUser(existingUser);
       }
+      // Navigate to menu or home
+      Navigator.pushReplacementNamed(context, '/menu');
     } catch (e) {
       setState(() {
-        error = 'Đăng nhập thất bại: ${e.toString()}';
+        error = 'Đăng nhập thất bại';
       });
     } finally {
       setState(() {
@@ -63,21 +70,24 @@ class _LoginScreenState extends State<LoginScreen> {
     });
 
     try {
-      UserCredential userCredential = await _auth.createUserWithEmailAndPassword(
-        email: emailController.text.trim(),
-        password: passwordController.text,
-      );
+      UserCredential userCredential = await _auth
+          .createUserWithEmailAndPassword(
+            email: emailController.text.trim(),
+            password: passwordController.text,
+          );
 
       // Tạo user trong Firestore
-      await _firestoreService.addUser(AppUser(
-        id: userCredential.user!.uid,
-        email: emailController.text.trim(),
-        name: nameController.text.trim(),
-        createdAt: DateTime.now(),
-      ));
+      await _firestoreService.addUser(
+        AppUser(
+          id: userCredential.user!.uid,
+          email: emailController.text.trim(),
+          name: nameController.text.trim(),
+          createdAt: DateTime.now(),
+        ),
+      );
     } catch (e) {
       setState(() {
-        error = 'Đăng ký thất bại: ${e.toString()}';
+        error = 'Đăng ký thất bại';
       });
     } finally {
       setState(() {
@@ -94,11 +104,7 @@ class _LoginScreenState extends State<LoginScreen> {
           gradient: LinearGradient(
             begin: Alignment.topLeft,
             end: Alignment.bottomRight,
-            colors: [
-              Color(0xFFFF6B6B),
-              Color(0xFFFFE66D),
-              Color(0xFF4ECDC4),
-            ],
+            colors: [Color(0xFFFF6B6B), Color(0xFFFFE66D), Color(0xFF4ECDC4)],
           ),
         ),
         child: SafeArea(
@@ -140,10 +146,7 @@ class _LoginScreenState extends State<LoginScreen> {
                       const SizedBox(height: 8),
                       Text(
                         'Khám phá thế giới ẩm thực',
-                        style: TextStyle(
-                          fontSize: 16,
-                          color: Colors.grey[600],
-                        ),
+                        style: TextStyle(fontSize: 16, color: Colors.grey[600]),
                       ),
                       const SizedBox(height: 40),
 
@@ -154,16 +157,22 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: GestureDetector(
                               onTap: () => setState(() => isLoginMode = true),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: isLoginMode ? const Color(0xFFFF6B6B) : Colors.transparent,
+                                  color: isLoginMode
+                                      ? const Color(0xFFFF6B6B)
+                                      : Colors.transparent,
                                   borderRadius: BorderRadius.circular(25),
                                 ),
                                 child: Text(
                                   'Đăng nhập',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    color: isLoginMode ? Colors.white : Colors.grey[600],
+                                    color: isLoginMode
+                                        ? Colors.white
+                                        : Colors.grey[600],
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -175,16 +184,22 @@ class _LoginScreenState extends State<LoginScreen> {
                             child: GestureDetector(
                               onTap: () => setState(() => isLoginMode = false),
                               child: Container(
-                                padding: const EdgeInsets.symmetric(vertical: 12),
+                                padding: const EdgeInsets.symmetric(
+                                  vertical: 12,
+                                ),
                                 decoration: BoxDecoration(
-                                  color: !isLoginMode ? const Color(0xFFFF6B6B) : Colors.transparent,
+                                  color: !isLoginMode
+                                      ? const Color(0xFFFF6B6B)
+                                      : Colors.transparent,
                                   borderRadius: BorderRadius.circular(25),
                                 ),
                                 child: Text(
                                   'Đăng ký',
                                   textAlign: TextAlign.center,
                                   style: TextStyle(
-                                    color: !isLoginMode ? Colors.white : Colors.grey[600],
+                                    color: !isLoginMode
+                                        ? Colors.white
+                                        : Colors.grey[600],
                                     fontWeight: FontWeight.w600,
                                   ),
                                 ),
@@ -201,7 +216,10 @@ class _LoginScreenState extends State<LoginScreen> {
                           controller: nameController,
                           decoration: InputDecoration(
                             labelText: 'Họ và tên',
-                            prefixIcon: const Icon(Icons.person, color: Color(0xFFFF6B6B)),
+                            prefixIcon: const Icon(
+                              Icons.person,
+                              color: Color(0xFFFF6B6B),
+                            ),
                             border: OutlineInputBorder(
                               borderRadius: BorderRadius.circular(15),
                               borderSide: BorderSide.none,
@@ -217,7 +235,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         controller: emailController,
                         decoration: InputDecoration(
                           labelText: 'Email',
-                          prefixIcon: const Icon(Icons.email, color: Color(0xFFFF6B6B)),
+                          prefixIcon: const Icon(
+                            Icons.email,
+                            color: Color(0xFFFF6B6B),
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(15),
                             borderSide: BorderSide.none,
@@ -233,7 +254,10 @@ class _LoginScreenState extends State<LoginScreen> {
                         obscureText: true,
                         decoration: InputDecoration(
                           labelText: 'Mật khẩu',
-                          prefixIcon: const Icon(Icons.lock, color: Color(0xFFFF6B6B)),
+                          prefixIcon: const Icon(
+                            Icons.lock,
+                            color: Color(0xFFFF6B6B),
+                          ),
                           border: OutlineInputBorder(
                             borderRadius: BorderRadius.circular(15),
                             borderSide: BorderSide.none,
@@ -248,7 +272,9 @@ class _LoginScreenState extends State<LoginScreen> {
                       SizedBox(
                         width: double.infinity,
                         child: ElevatedButton(
-                          onPressed: isLoading ? null : (isLoginMode ? signIn : signUp),
+                          onPressed: isLoading
+                              ? null
+                              : (isLoginMode ? signIn : signUp),
                           style: ElevatedButton.styleFrom(
                             backgroundColor: const Color(0xFFFF6B6B),
                             foregroundColor: Colors.white,
@@ -264,7 +290,9 @@ class _LoginScreenState extends State<LoginScreen> {
                                   width: 20,
                                   child: CircularProgressIndicator(
                                     strokeWidth: 2,
-                                    valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                                    valueColor: AlwaysStoppedAnimation<Color>(
+                                      Colors.white,
+                                    ),
                                   ),
                                 )
                               : Text(
@@ -289,7 +317,11 @@ class _LoginScreenState extends State<LoginScreen> {
                           ),
                           child: Row(
                             children: [
-                              Icon(Icons.error, color: Colors.red[600], size: 20),
+                              Icon(
+                                Icons.error,
+                                color: Colors.red[600],
+                                size: 20,
+                              ),
                               const SizedBox(width: 8),
                               Expanded(
                                 child: Text(

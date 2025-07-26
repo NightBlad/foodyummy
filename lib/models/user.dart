@@ -1,3 +1,5 @@
+import 'package:cloud_firestore/cloud_firestore.dart';
+
 class AppUser {
   final String id;
   final String email;
@@ -13,7 +15,7 @@ class AppUser {
     required this.id,
     required this.email,
     required this.name,
-    this.role = 'user',
+    this.role = 'user', // default value, can be overridden by constructor
     this.profileImageUrl,
     this.favoriteRecipes = const [],
     required this.createdAt,
@@ -29,7 +31,7 @@ class AppUser {
       'role': role,
       'profileImageUrl': profileImageUrl,
       'favoriteRecipes': favoriteRecipes,
-      'createdAt': createdAt.millisecondsSinceEpoch,
+      'createdAt': createdAt.toIso8601String(),
       'bio': bio,
       'recipesCreated': recipesCreated,
     };
@@ -43,11 +45,38 @@ class AppUser {
       role: map['role'] ?? 'user',
       profileImageUrl: map['profileImageUrl'],
       favoriteRecipes: List<String>.from(map['favoriteRecipes'] ?? []),
-      createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] ?? 0),
+      createdAt: (map['createdAt'] is Timestamp)
+          ? (map['createdAt'] as Timestamp).toDate()
+          : DateTime.tryParse(map['createdAt']?.toString() ?? '') ??
+                DateTime.now(),
       bio: map['bio'],
       recipesCreated: map['recipesCreated'] ?? 0,
     );
   }
 
   bool get isAdmin => role == 'admin';
+
+  AppUser copyWith({
+    String? id,
+    String? email,
+    String? name,
+    String? role,
+    String? profileImageUrl,
+    List<String>? favoriteRecipes,
+    DateTime? createdAt,
+    String? bio,
+    int? recipesCreated,
+  }) {
+    return AppUser(
+      id: id ?? this.id,
+      email: email ?? this.email,
+      name: name ?? this.name,
+      role: role ?? this.role,
+      profileImageUrl: profileImageUrl ?? this.profileImageUrl,
+      favoriteRecipes: favoriteRecipes ?? this.favoriteRecipes,
+      createdAt: createdAt ?? this.createdAt,
+      bio: bio ?? this.bio,
+      recipesCreated: recipesCreated ?? this.recipesCreated,
+    );
+  }
 }

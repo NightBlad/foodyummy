@@ -2,7 +2,7 @@ import 'package:flutter/material.dart';
 import '../models/ingredient.dart';
 
 class IngredientScreen extends StatefulWidget {
-  const IngredientScreen({Key? key}) : super(key: key);
+  const IngredientScreen({super.key});
 
   @override
   State<IngredientScreen> createState() => _IngredientScreenState();
@@ -13,7 +13,7 @@ class _IngredientScreenState extends State<IngredientScreen> {
   final TextEditingController _typeController = TextEditingController();
   String searchQuery = '';
 
-  List<Ingredient> _ingredients = [
+  final List<Ingredient> _ingredients = [
     Ingredient(id: '1', name: 'Tomato', type: 'Vegetable'),
     Ingredient(id: '2', name: 'Chicken', type: 'Meat'),
     Ingredient(id: '3', name: 'Salt', type: 'Spice'),
@@ -22,11 +22,13 @@ class _IngredientScreenState extends State<IngredientScreen> {
   void _addIngredient() {
     if (_nameController.text.trim().isEmpty) return;
     setState(() {
-      _ingredients.add(Ingredient(
-        id: DateTime.now().millisecondsSinceEpoch.toString(),
-        name: _nameController.text.trim(),
-        type: _typeController.text.trim(),
-      ));
+      _ingredients.add(
+        Ingredient(
+          id: DateTime.now().millisecondsSinceEpoch.toString(),
+          name: _nameController.text.trim(),
+          type: _typeController.text.trim(),
+        ),
+      );
       _nameController.clear();
       _typeController.clear();
     });
@@ -56,7 +58,9 @@ class _IngredientScreenState extends State<IngredientScreen> {
           TextButton(
             onPressed: () {
               setState(() {
-                final index = _ingredients.indexWhere((ing) => ing.id == ingredient.id);
+                final index = _ingredients.indexWhere(
+                  (ing) => ing.id == ingredient.id,
+                );
                 if (index != -1) {
                   _ingredients[index] = Ingredient(
                     id: ingredient.id,
@@ -92,15 +96,16 @@ class _IngredientScreenState extends State<IngredientScreen> {
 
   @override
   Widget build(BuildContext context) {
-    final filteredIngredients = _ingredients.where((ing) =>
-    ing.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
-        ing.type.toLowerCase().contains(searchQuery.toLowerCase())
-    ).toList();
+    final filteredIngredients = _ingredients
+        .where(
+          (ing) =>
+              ing.name.toLowerCase().contains(searchQuery.toLowerCase()) ||
+              ing.type.toLowerCase().contains(searchQuery.toLowerCase()),
+        )
+        .toList();
 
     return Scaffold(
-      appBar: AppBar(
-        title: const Text('Nguyên Liệu'),
-      ),
+      appBar: AppBar(title: const Text('Nguyên Liệu')),
       body: Padding(
         padding: const EdgeInsets.all(16.0),
         child: Column(
@@ -129,11 +134,11 @@ class _IngredientScreenState extends State<IngredientScreen> {
                 const SizedBox(width: 8),
                 ElevatedButton(
                   onPressed: _addIngredient,
-                  child: const Icon(Icons.add),
                   style: ElevatedButton.styleFrom(
                     shape: const CircleBorder(),
                     padding: const EdgeInsets.all(16),
                   ),
+                  child: const Icon(Icons.add),
                 ),
               ],
             ),
@@ -153,37 +158,49 @@ class _IngredientScreenState extends State<IngredientScreen> {
             const SizedBox(height: 16),
             Expanded(
               child: filteredIngredients.isEmpty
-                  ? const Center(child: Text('Không tìm thấy nguyên liệu'))
+                  ? const Center(child: Text('Kh��ng tìm thấy nguyên liệu'))
                   : ListView.builder(
-                itemCount: filteredIngredients.length,
-                itemBuilder: (context, index) {
-                  final ingredient = filteredIngredients[index];
-                  return Card(
-                    elevation: 4,
-                    margin: const EdgeInsets.symmetric(vertical: 8),
-                    shape: RoundedRectangleBorder(
-                      borderRadius: BorderRadius.circular(16),
-                    ),
-                    child: ListTile(
-                      title: Text(ingredient.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                      subtitle: Text(ingredient.type),
-                      trailing: Row(
-                        mainAxisSize: MainAxisSize.min,
-                        children: [
-                          IconButton(
-                            icon: const Icon(Icons.edit, color: Colors.deepPurple),
-                            onPressed: () => _editIngredient(ingredient),
+                      itemCount: filteredIngredients.length,
+                      itemBuilder: (context, index) {
+                        final ingredient = filteredIngredients[index];
+                        return Card(
+                          elevation: 4,
+                          margin: const EdgeInsets.symmetric(vertical: 8),
+                          shape: RoundedRectangleBorder(
+                            borderRadius: BorderRadius.circular(16),
                           ),
-                          IconButton(
-                            icon: const Icon(Icons.delete, color: Colors.red),
-                            onPressed: () => _deleteIngredient(ingredient.id),
+                          child: ListTile(
+                            title: Text(
+                              ingredient.name,
+                              style: const TextStyle(
+                                fontWeight: FontWeight.bold,
+                              ),
+                            ),
+                            subtitle: Text(ingredient.type),
+                            trailing: Row(
+                              mainAxisSize: MainAxisSize.min,
+                              children: [
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.edit,
+                                    color: Colors.deepPurple,
+                                  ),
+                                  onPressed: () => _editIngredient(ingredient),
+                                ),
+                                IconButton(
+                                  icon: const Icon(
+                                    Icons.delete,
+                                    color: Colors.red,
+                                  ),
+                                  onPressed: () =>
+                                      _deleteIngredient(ingredient.id),
+                                ),
+                              ],
+                            ),
                           ),
-                        ],
-                      ),
+                        );
+                      },
                     ),
-                  );
-                },
-              ),
             ),
           ],
         ),

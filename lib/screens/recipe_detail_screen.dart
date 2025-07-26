@@ -446,7 +446,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ),
               ],
             ),
-          )).toList(),
+          )),
         ],
       ),
     );
@@ -538,7 +538,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ],
               ),
             );
-          }).toList(),
+          }),
         ],
       ),
     );

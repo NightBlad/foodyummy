@@ -24,8 +24,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   final TextEditingController _servingsController = TextEditingController();
 
   // Lists
-  List<TextEditingController> _ingredientControllers = [TextEditingController()];
-  List<TextEditingController> _instructionControllers = [TextEditingController()];
+  List<TextEditingController> _ingredientControllers = [
+    TextEditingController(),
+  ];
+  List<TextEditingController> _instructionControllers = [
+    TextEditingController(),
+  ];
   List<String> _tags = [];
 
   String _selectedCategory = 'Món chính';
@@ -33,15 +37,20 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   bool _isLoading = false;
 
   final List<String> _categories = [
-    'Món chính', 'Món phụ', 'Tráng miệng',
-    'Đồ uống', 'Món ăn sáng', 'Món ăn nhẹ', 'Súp'
+    'Món chính',
+    'Món phụ',
+    'Tráng miệng',
+    'Đồ uống',
+    'Món ăn sáng',
+    'Món ăn nhẹ',
+    'Súp',
   ];
 
   final List<String> _difficulties = ['easy', 'medium', 'hard'];
   final Map<String, String> _difficultyLabels = {
     'easy': 'Dễ',
     'medium': 'Trung bình',
-    'hard': 'Khó'
+    'hard': 'Khó',
   };
 
   @override
@@ -179,10 +188,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [
-              Color(0xFFF8F9FA),
-              Color(0xFFFFFFFF),
-            ],
+            colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
           ),
         ),
         child: SafeArea(
@@ -211,7 +217,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
                         _buildSectionTitle('Thông tin bổ sung'),
                         _buildAdditionalInfoSection(),
-                        const SizedBox(height: 100), // Space for floating button
+                        const SizedBox(
+                          height: 100,
+                        ), // Space for floating button
                       ],
                     ),
                   ),
@@ -251,7 +259,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           const SizedBox(width: 16),
           Expanded(
             child: Text(
-              widget.recipe == null ? 'Thêm công thức mới' : 'Chỉnh sửa công thức',
+              widget.recipe == null
+                  ? 'Thêm công thức mới'
+                  : 'Chỉnh sửa công thức',
               style: const TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
@@ -312,7 +322,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             controller: _titleController,
             label: 'Tên món ăn',
             icon: Icons.restaurant_menu,
-            validator: (value) => value?.isEmpty == true ? 'Vui lòng nhập tên món ăn' : null,
+            validator: (value) =>
+                value?.isEmpty == true ? 'Vui lòng nhập tên món ăn' : null,
           ),
           const SizedBox(height: 16),
 
@@ -321,7 +332,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             label: 'Mô tả',
             icon: Icons.description,
             maxLines: 3,
-            validator: (value) => value?.isEmpty == true ? 'Vui lòng nhập mô tả' : null,
+            validator: (value) =>
+                value?.isEmpty == true ? 'Vui lòng nhập mô tả' : null,
           ),
           const SizedBox(height: 16),
 
@@ -340,7 +352,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   label: 'Thời gian (phút)',
                   icon: Icons.access_time,
                   keyboardType: TextInputType.number,
-                  validator: (value) => value?.isEmpty == true ? 'Nhập thời gian' : null,
+                  validator: (value) =>
+                      value?.isEmpty == true ? 'Nhập thời gian' : null,
                 ),
               ),
               const SizedBox(width: 16),
@@ -350,20 +363,18 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   label: 'Số người ăn',
                   icon: Icons.people,
                   keyboardType: TextInputType.number,
-                  validator: (value) => value?.isEmpty == true ? 'Nhập số người' : null,
+                  validator: (value) =>
+                      value?.isEmpty == true ? 'Nhập số người' : null,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
 
-          Row(
-            children: [
-              Expanded(child: _buildCategoryDropdown()),
-              const SizedBox(width: 16),
-              Expanded(child: _buildDifficultyDropdown()),
-            ],
-          ),
+          Row(children: [Expanded(child: _buildCategoryDropdown())]),
+          const SizedBox(height: 16),
+
+          Row(children: [Expanded(child: _buildDifficultyDropdown())]),
         ],
       ),
     );
@@ -409,10 +420,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         fillColor: Colors.grey[50],
       ),
       items: _categories.map((category) {
-        return DropdownMenuItem(
-          value: category,
-          child: Text(category),
-        );
+        return DropdownMenuItem(value: category, child: Text(category));
       }).toList(),
       onChanged: (value) {
         setState(() {
@@ -427,7 +435,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       value: _selectedDifficulty,
       decoration: InputDecoration(
         labelText: 'Độ khó',
-        prefixIcon: const Icon(Icons.signal_cellular_alt, color: Color(0xFFFF6B6B)),
+        prefixIcon: const Icon(
+          Icons.signal_cellular_alt,
+          color: Color(0xFFFF6B6B),
+        ),
         border: OutlineInputBorder(
           borderRadius: BorderRadius.circular(15),
           borderSide: BorderSide.none,
@@ -476,7 +487,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       controller: _ingredientControllers[index],
                       decoration: InputDecoration(
                         labelText: 'Nguyên liệu ${index + 1}',
-                        prefixIcon: const Icon(Icons.kitchen, color: Color(0xFFFF6B6B)),
+                        prefixIcon: const Icon(
+                          Icons.kitchen,
+                          color: Color(0xFFFF6B6B),
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
                           borderSide: BorderSide.none,
@@ -558,7 +572,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                       maxLines: 3,
                       decoration: InputDecoration(
                         labelText: 'Bước ${index + 1}',
-                        prefixIcon: const Icon(Icons.list_alt, color: Color(0xFFFF6B6B)),
+                        prefixIcon: const Icon(
+                          Icons.list_alt,
+                          color: Color(0xFFFF6B6B),
+                        ),
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
                           borderSide: BorderSide.none,
@@ -573,7 +590,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     Padding(
                       padding: const EdgeInsets.only(top: 8),
                       child: IconButton(
-                        icon: const Icon(Icons.remove_circle, color: Colors.red),
+                        icon: const Icon(
+                          Icons.remove_circle,
+                          color: Colors.red,
+                        ),
                         onPressed: () {
                           setState(() {
                             _instructionControllers[index].dispose();
@@ -644,7 +664,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           TextFormField(
             initialValue: _tags.join(', '),
             onChanged: (value) {
-              _tags = value.split(',').map((tag) => tag.trim()).where((tag) => tag.isNotEmpty).toList();
+              _tags = value
+                  .split(',')
+                  .map((tag) => tag.trim())
+                  .where((tag) => tag.isNotEmpty)
+                  .toList();
             },
             decoration: InputDecoration(
               hintText: 'Ví dụ: nhanh, dễ làm, ít dầu mỡ',
@@ -692,7 +716,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   Icon(widget.recipe == null ? Icons.add : Icons.save),
                   const SizedBox(width: 8),
                   Text(
-                    widget.recipe == null ? 'Thêm công thức' : 'Cập nhật công thức',
+                    widget.recipe == null
+                        ? 'Thêm công thức'
+                        : 'Cập nhật công thức',
                     style: const TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.bold,

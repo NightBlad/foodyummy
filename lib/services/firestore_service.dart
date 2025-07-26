@@ -1,6 +1,8 @@
 import 'package:cloud_firestore/cloud_firestore.dart';
 import '../models/user.dart';
 import '../models/recipe.dart';
+import '../models/favorite.dart';
+import '../models/ingredient.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
@@ -19,13 +21,16 @@ class FirestoreService {
   // Lấy thông tin user
   Future<AppUser?> getUser(String userId) async {
     try {
-      DocumentSnapshot doc = await _db.collection('users').doc(userId).get();
+      final doc = await _db.collection('users').doc(userId).get();
       if (doc.exists) {
-        return AppUser.fromMap(doc.data() as Map<String, dynamic>);
+        final data = doc.data();
+        if (data != null) {
+          return AppUser.fromMap(data);
+        }
       }
       return null;
     } catch (e) {
-      throw Exception('Lỗi khi lấy thông tin user: $e');
+      throw Exception('Lỗi khi lấy user: $e');
     }
   }
 
@@ -38,12 +43,26 @@ class FirestoreService {
     }
   }
 
+  // Cập nhật thông tin user (chỉ cập nhật các trường truyền vào)
+  Future<void> updateUserFields(
+    String userId,
+    Map<String, dynamic> data,
+  ) async {
+    try {
+      await _db.collection('users').doc(userId).update(data);
+    } catch (e) {
+      throw Exception('Lỗi khi cập nhật user: $e');
+    }
+  }
+
   // ==================== RECIPE MANAGEMENT ====================
 
   // Thêm công thức nấu ăn mới
   Future<String> addRecipe(Recipe recipe) async {
     try {
-      DocumentReference docRef = await _db.collection('recipes').add(recipe.toMap());
+      DocumentReference docRef = await _db
+          .collection('recipes')
+          .add(recipe.toMap());
 
       // Cập nhật ID của recipe
       await docRef.update({'id': docRef.id});
@@ -54,21 +73,25 @@ class FirestoreService {
     }
   }
 
-  // Lấy tất cả công thức
+  // Lấy tất cả công th��c
   Stream<List<Recipe>> getRecipes() {
     return _db
         .collection('recipes')
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Recipe.fromMap(doc.data()))
-            .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Recipe.fromMap(doc.data())).toList(),
+        );
   }
 
   // Lấy công thức theo ID
   Future<Recipe?> getRecipe(String recipeId) async {
     try {
-      DocumentSnapshot doc = await _db.collection('recipes').doc(recipeId).get();
+      DocumentSnapshot doc = await _db
+          .collection('recipes')
+          .doc(recipeId)
+          .get();
       if (doc.exists) {
         return Recipe.fromMap(doc.data() as Map<String, dynamic>);
       }
@@ -103,9 +126,10 @@ class FirestoreService {
         .where('title', isGreaterThanOrEqualTo: query)
         .where('title', isLessThanOrEqualTo: '$query\uf8ff')
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Recipe.fromMap(doc.data()))
-            .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Recipe.fromMap(doc.data())).toList(),
+        );
   }
 
   // Lấy công thức theo danh mục
@@ -115,18 +139,17 @@ class FirestoreService {
         .where('category', isEqualTo: category)
         .orderBy('createdAt', descending: true)
         .snapshots()
-        .map((snapshot) => snapshot.docs
-            .map((doc) => Recipe.fromMap(doc.data()))
-            .toList());
+        .map(
+          (snapshot) =>
+              snapshot.docs.map((doc) => Recipe.fromMap(doc.data())).toList(),
+        );
   }
 
   // Lấy công thức yêu thích của user
   Stream<List<Recipe>> getFavoriteRecipes(String userId) {
-    return _db
-        .collection('users')
-        .doc(userId)
-        .snapshots()
-        .asyncMap((userDoc) async {
+    return _db.collection('users').doc(userId).snapshots().asyncMap((
+      userDoc,
+    ) async {
       if (!userDoc.exists) return <Recipe>[];
 
       AppUser user = AppUser.fromMap(userDoc.data()!);
@@ -166,6 +189,95 @@ class FirestoreService {
     }
   }
 
+  // ==================== FAVORITE MANAGEMENT ====================
+
+  Future<void> addFavorite(Favorite favorite) async {
+    try {
+      DocumentReference docRef = await _db
+          .collection('favorites')
+          .add(favorite.toMap());
+      await docRef.update({'id': docRef.id});
+    } catch (e) {
+      throw Exception('Lỗi khi thêm món yêu thích: $e');
+    }
+  }
+
+  Stream<List<Favorite>> getFavorites(String userId) {
+    return _db
+        .collection('favorites')
+        .where('userId', isEqualTo: userId)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Favorite.fromMap(doc.data(), doc.id))
+              .toList(),
+        );
+  }
+
+  Stream<List<Favorite>> searchFavorites(String userId, String query) {
+    return _db
+        .collection('favorites')
+        .where('userId', isEqualTo: userId)
+        .where('name', isGreaterThanOrEqualTo: query)
+        .where('name', isLessThanOrEqualTo: '$query\uf8ff')
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Favorite.fromMap(doc.data(), doc.id))
+              .toList(),
+        );
+  }
+
+  Stream<List<Favorite>> filterFavoritesByType(String userId, String type) {
+    return _db
+        .collection('favorites')
+        .where('userId', isEqualTo: userId)
+        .where('type', isEqualTo: type)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs
+              .map((doc) => Favorite.fromMap(doc.data(), doc.id))
+              .toList(),
+        );
+  }
+
+  Future<void> updateFavorite(String id, Favorite favorite) async {
+    try {
+      await _db.collection('favorites').doc(id).update(favorite.toMap());
+    } catch (e) {
+      throw Exception('Lỗi khi cập nhật món yêu thích: $e');
+    }
+  }
+
+  Future<void> deleteFavorite(String id) async {
+    try {
+      await _db.collection('favorites').doc(id).delete();
+    } catch (e) {
+      throw Exception('Lỗi khi xóa món yêu thích: $e');
+    }
+  }
+
+  // ==================== INGREDIENT MANAGEMENT ====================
+
+  Future<void> addIngredient(Ingredient ingredient) async {
+    try {
+      DocumentReference docRef = await _db
+          .collection('ingredients')
+          .add(ingredient.toMap());
+      await docRef.update({'id': docRef.id});
+    } catch (e) {
+      throw Exception('Lỗi khi thêm nguyên liệu: $e');
+    }
+  }
+
+  Future<void> deleteIngredient(String id) async {
+    try {
+      await _db.collection('ingredients').doc(id).delete();
+    } catch (e) {
+      throw Exception('Lỗi khi xóa nguyên liệu: $e');
+    }
+  }
+
   // Lấy danh mục phổ biến
   Future<List<String>> getPopularCategories() async {
     try {
@@ -174,7 +286,8 @@ class FirestoreService {
 
       for (var doc in snapshot.docs) {
         Recipe recipe = Recipe.fromMap(doc.data() as Map<String, dynamic>);
-        categoryCount[recipe.category] = (categoryCount[recipe.category] ?? 0) + 1;
+        categoryCount[recipe.category] =
+            (categoryCount[recipe.category] ?? 0) + 1;
       }
 
       var sortedCategories = categoryCount.entries.toList()
