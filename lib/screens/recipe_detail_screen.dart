@@ -3,8 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
 import '../models/user.dart';
 import '../services/firestore_service.dart';
-import 'add_recipe_screen.dart';
 import '../widgets/hybrid_image_widget.dart';
+import 'add_recipe_screen.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
