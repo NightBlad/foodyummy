@@ -1,4 +1,44 @@
+                                controller: _nameController,
+                                decoration: const InputDecoration(labelText: 'Tên Thực Đơn'),
+                              ),
+                              TextField(
+                                controller: _categoryController,
+                                decoration: const InputDecoration(labelText: 'Danh Mục'),
+                              ),
+                              TextField(
+                                controller: _priceController,
+                                decoration: const InputDecoration(labelText: 'Giá'),
+                                keyboardType: TextInputType.number,
+                              ),
+                              TextField(
+                                controller: _descriptionController,
+                                decoration: const InputDecoration(labelText: 'Mô Tả'),
+                              ),
+                            ],
+                          ),
+                          actions: [
+                            TextButton(
+                              onPressed: () {
+                                if (_nameController.text.trim().isNotEmpty) {
+                                  addFood();
+                                  Navigator.pop(context);
+                                }
+                              },
+                              child: const Text('Thêm'),
+                            ),
+                            TextButton(
+                              onPressed: () {
+                                Navigator.pop(context);
+                              },
+                              child: const Text('Hủy'),
+                            ),
+                          ],
+                        ),
+                      );
+                    },
 import 'package:flutter/material.dart';
+import '../services/firestore_service.dart';
+import 'package:firebase_auth/firebase_auth.dart';
 
 class Menu {
   final String id;
@@ -16,268 +56,26 @@ class Recipe {
   Recipe({required this.id, required this.name, required this.ingredients, required this.instructions});
 }
 
-class MenuScreen extends StatefulWidget {
+class MenuScreen extends StatelessWidget {
+  final FirestoreService _firestoreService = FirestoreService();
+  final TextEditingController _nameController = TextEditingController();
+  final TextEditingController _categoryController = TextEditingController();
+  final TextEditingController _priceController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+
+  Future<void> addFood() async {
+    String name = _nameController.text;
+    String category = _categoryController.text;
+    double price = double.parse(_priceController.text);
+    String description = _descriptionController.text;
+    String createdBy = FirebaseAuth.instance.currentUser!.uid;
+
+    await _firestoreService.addFoodItem(name, category, price, description, createdBy);
+  }
+
   const MenuScreen({Key? key}) : super(key: key);
   @override
-  State<MenuScreen> createState() => _MenuScreenState();
-}
-
-class _MenuScreenState extends State<MenuScreen> {
-  List<Menu> _menus = [
-    Menu(
-      id: '1',
-      name: 'Bữa Trưa',
-      type: 'Lunch',
-      recipes: [
-        Recipe(
-          id: 'r1',
-          name: 'Cơm Chiên',
-          ingredients: ['Gạo', 'Trứng', 'Cà Rốt', 'Đậu Hà Lan'],
-          instructions: 'Xào tất cả các nguyên liệu với nhau.',
-        ),
-        Recipe(
-          id: 'r2',
-          name: 'Súp Cà Chua',
-          ingredients: ['Cà Chua', 'Nước', 'Muối'],
-          instructions: 'Luộc cà chua, thêm muối.',
-        ),
-      ],
-    ),
-    Menu(
-      id: '2',
-      name: 'Bữa Tối',
-      type: 'Dinner',
-      recipes: [
-        Recipe(
-          id: 'r3',
-          name: 'Gà Nướng',
-          ingredients: ['Gà', 'Muối', 'Tiêu'],
-          instructions: 'Nướng gà với muối và tiêu.',
-        ),
-      ],
-    ),
-  ];
-
-  final TextEditingController _menuNameController = TextEditingController();
-  String _searchQuery = '';
-  String _selectedType = 'Tất Cả';
-  final List<String> _mealTypes = ['Tất Cả', 'Breakfast', 'Lunch', 'Dinner', 'Snack', 'Vegetarian', 'Vegan', 'Vietnamese', 'Western'];
-
-  void _addMenu() {
-    String _newType = 'Lunch';
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Thêm Thực Đơn'),
-        content: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            TextField(
-              controller: _menuNameController,
-              decoration: const InputDecoration(labelText: 'Tên Thực Đơn'),
-            ),
-            DropdownButtonFormField<String>(
-              value: _newType,
-              items: _mealTypes.where((e) => e != 'Tất Cả').map((type) => DropdownMenuItem(value: type, child: Text(type))).toList(),
-              onChanged: (val) {
-                if (val != null) _newType = val;
-              },
-              decoration: const InputDecoration(labelText: 'Loại Bữa Ăn'),
-            ),
-          ],
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              if (_menuNameController.text.trim().isNotEmpty) {
-                setState(() {
-                  _menus.add(Menu(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    name: _menuNameController.text.trim(),
-                    type: _newType,
-                    recipes: [],
-                  ));
-                });
-              }
-              _menuNameController.clear();
-              Navigator.pop(context);
-            },
-            child: const Text('Thêm'),
-          ),
-          TextButton(
-            onPressed: () {
-              _menuNameController.clear();
-              Navigator.pop(context);
-            },
-            child: const Text('Hủy'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _editMenu(Menu menu) {
-    _menuNameController.text = menu.name;
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Sửa Thực Đơn'),
-        content: TextField(
-          controller: _menuNameController,
-          decoration: const InputDecoration(labelText: 'Tên Thực Đơn'),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              setState(() {
-                final index = _menus.indexWhere((m) => m.id == menu.id);
-                if (index != -1) {
-                  _menus[index] = Menu(
-                    id: menu.id,
-                    name: _menuNameController.text.trim(),
-                    type: menu.type,
-                    recipes: menu.recipes,
-                  );
-                }
-              });
-              _menuNameController.clear();
-              Navigator.pop(context);
-            },
-            child: const Text('Lưu'),
-          ),
-          TextButton(
-            onPressed: () {
-              _menuNameController.clear();
-              Navigator.pop(context);
-            },
-            child: const Text('Hủy'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  void _deleteMenu(String id) {
-    setState(() {
-      _menus.removeWhere((m) => m.id == id);
-    });
-  }
-
-  void _showRecipes(Menu menu) {
-    showModalBottomSheet(
-      context: context,
-      isScrollControlled: true,
-      shape: const RoundedRectangleBorder(
-        borderRadius: BorderRadius.vertical(top: Radius.circular(24)),
-      ),
-      builder: (context) => Padding(
-        padding: const EdgeInsets.all(16.0),
-        child: Column(
-          mainAxisSize: MainAxisSize.min,
-          children: [
-            Text(menu.name, style: Theme.of(context).textTheme.headlineSmall),
-            ...menu.recipes.map((recipe) => Card(
-              margin: const EdgeInsets.symmetric(vertical: 8),
-              child: ListTile(
-                title: Text(recipe.name, style: const TextStyle(fontWeight: FontWeight.bold)),
-                subtitle: Column(
-                  crossAxisAlignment: CrossAxisAlignment.start,
-                  children: [
-                    Text('Nguyên Liệu: ${recipe.ingredients.join(", ")}'),
-                    Text('Hướng Dẫn: ${recipe.instructions}'),
-                  ],
-                ),
-              ),
-            )),
-            if (menu.recipes.isEmpty)
-              const Padding(
-                padding: EdgeInsets.all(16.0),
-                child: Text('Không có món ăn trong thực đơn này.'),
-              ),
-            ElevatedButton.icon(
-              icon: const Icon(Icons.add),
-              label: const Text('Thêm Món Ăn'),
-              onPressed: () => _addRecipe(menu),
-            ),
-          ],
-        ),
-      ),
-    );
-  }
-
-  final TextEditingController _recipeNameController = TextEditingController();
-  final TextEditingController _recipeIngredientsController = TextEditingController();
-  final TextEditingController _recipeInstructionsController = TextEditingController();
-
-  void _addRecipe(Menu menu) {
-    showDialog(
-      context: context,
-      builder: (context) => AlertDialog(
-        title: const Text('Thêm Món Ăn'),
-        content: SingleChildScrollView(
-          child: Column(
-            children: [
-              TextField(
-                controller: _recipeNameController,
-                decoration: const InputDecoration(labelText: 'Tên Món Ăn'),
-              ),
-              TextField(
-                controller: _recipeIngredientsController,
-                decoration: const InputDecoration(labelText: 'Nguyên Liệu (phân cách bằng dấu phẩy)'),
-              ),
-              TextField(
-                controller: _recipeInstructionsController,
-                decoration: const InputDecoration(labelText: 'Hướng Dẫn'),
-              ),
-            ],
-          ),
-        ),
-        actions: [
-          TextButton(
-            onPressed: () {
-              if (_recipeNameController.text.trim().isNotEmpty) {
-                setState(() {
-                  menu.recipes.add(Recipe(
-                    id: DateTime.now().millisecondsSinceEpoch.toString(),
-                    name: _recipeNameController.text.trim(),
-                    ingredients: _recipeIngredientsController.text.split(',').map((e) => e.trim()).toList(),
-                    instructions: _recipeInstructionsController.text.trim(),
-                  ));
-                });
-              }
-              _recipeNameController.clear();
-              _recipeIngredientsController.clear();
-              _recipeInstructionsController.clear();
-              Navigator.pop(context);
-              if (Navigator.canPop(context)) {
-                Navigator.pop(context);
-              }
-              _showRecipes(menu);
-            },
-            child: const Text('Thêm'),
-          ),
-          TextButton(
-            onPressed: () {
-              _recipeNameController.clear();
-              _recipeIngredientsController.clear();
-              _recipeInstructionsController.clear();
-              Navigator.pop(context);
-            },
-            child: const Text('Hủy'),
-          ),
-        ],
-      ),
-    );
-  }
-
-  @override
   Widget build(BuildContext context) {
-    List<Menu> filteredMenus = _menus.where((menu) {
-      final matchesType = _selectedType == 'Tất Cả' || menu.type == _selectedType;
-      final matchesSearch = menu.name.toLowerCase().contains(_searchQuery.toLowerCase());
-      return matchesType && matchesSearch;
-    }).toList();
-    filteredMenus.sort((a, b) => a.type.compareTo(b.type));
     return Scaffold(
       appBar: AppBar(
         title: Row(
@@ -315,7 +113,15 @@ class _MenuScreenState extends State<MenuScreen> {
                       backgroundColor: Colors.pinkAccent,
                       shape: RoundedRectangleBorder(borderRadius: BorderRadius.circular(12)),
                     ),
-                    onPressed: _addMenu,
+                    onPressed: () {
+                      showDialog(
+                        context: context,
+                        builder: (context) => AlertDialog(
+                          title: const Text('Thêm Thực Đơn'),
+                          content: Column(
+                            mainAxisSize: MainAxisSize.min,
+                            children: [
+                              TextField(
                   ),
                 ],
               ),

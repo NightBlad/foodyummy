@@ -1,0 +1,706 @@
+import 'package:flutter/material.dart';
+import 'package:firebase_auth/firebase_auth.dart';
+import '../models/recipe.dart';
+import '../services/firestore_service.dart';
+
+class AddRecipeScreen extends StatefulWidget {
+  final Recipe? recipe; // null = thêm mới, có giá trị = chỉnh sửa
+
+  const AddRecipeScreen({super.key, this.recipe});
+
+  @override
+  _AddRecipeScreenState createState() => _AddRecipeScreenState();
+}
+
+class _AddRecipeScreenState extends State<AddRecipeScreen> {
+  final FirestoreService _firestoreService = FirestoreService();
+  final _formKey = GlobalKey<FormState>();
+
+  // Controllers
+  final TextEditingController _titleController = TextEditingController();
+  final TextEditingController _descriptionController = TextEditingController();
+  final TextEditingController _imageUrlController = TextEditingController();
+  final TextEditingController _cookingTimeController = TextEditingController();
+  final TextEditingController _servingsController = TextEditingController();
+
+  // Lists
+  List<TextEditingController> _ingredientControllers = [TextEditingController()];
+  List<TextEditingController> _instructionControllers = [TextEditingController()];
+  List<String> _tags = [];
+
+  String _selectedCategory = 'Món chính';
+  String _selectedDifficulty = 'easy';
+  bool _isLoading = false;
+
+  final List<String> _categories = [
+    'Món chính', 'Món phụ', 'Tráng miệng',
+    'Đồ uống', 'Món ăn sáng', 'Món ăn nhẹ', 'Súp'
+  ];
+
+  final List<String> _difficulties = ['easy', 'medium', 'hard'];
+  final Map<String, String> _difficultyLabels = {
+    'easy': 'Dễ',
+    'medium': 'Trung bình',
+    'hard': 'Khó'
+  };
+
+  @override
+  void initState() {
+    super.initState();
+    if (widget.recipe != null) {
+      _loadRecipeData();
+    }
+  }
+
+  void _loadRecipeData() {
+    final recipe = widget.recipe!;
+    _titleController.text = recipe.title;
+    _descriptionController.text = recipe.description;
+    _imageUrlController.text = recipe.imageUrl;
+    _cookingTimeController.text = recipe.cookingTime.toString();
+    _servingsController.text = recipe.servings.toString();
+    _selectedCategory = recipe.category;
+    _selectedDifficulty = recipe.difficulty;
+    _tags = List.from(recipe.tags);
+
+    // Load ingredients
+    _ingredientControllers = recipe.ingredients
+        .map((ingredient) => TextEditingController(text: ingredient))
+        .toList();
+    if (_ingredientControllers.isEmpty) {
+      _ingredientControllers.add(TextEditingController());
+    }
+
+    // Load instructions
+    _instructionControllers = recipe.instructions
+        .map((instruction) => TextEditingController(text: instruction))
+        .toList();
+    if (_instructionControllers.isEmpty) {
+      _instructionControllers.add(TextEditingController());
+    }
+  }
+
+  @override
+  void dispose() {
+    _titleController.dispose();
+    _descriptionController.dispose();
+    _imageUrlController.dispose();
+    _cookingTimeController.dispose();
+    _servingsController.dispose();
+
+    for (var controller in _ingredientControllers) {
+      controller.dispose();
+    }
+    for (var controller in _instructionControllers) {
+      controller.dispose();
+    }
+    super.dispose();
+  }
+
+  Future<void> _saveRecipe() async {
+    if (!_formKey.currentState!.validate()) return;
+
+    final user = FirebaseAuth.instance.currentUser;
+    if (user == null) return;
+
+    setState(() {
+      _isLoading = true;
+    });
+
+    try {
+      final ingredients = _ingredientControllers
+          .map((controller) => controller.text.trim())
+          .where((text) => text.isNotEmpty)
+          .toList();
+
+      final instructions = _instructionControllers
+          .map((controller) => controller.text.trim())
+          .where((text) => text.isNotEmpty)
+          .toList();
+
+      final recipe = Recipe(
+        id: widget.recipe?.id ?? '',
+        title: _titleController.text.trim(),
+        description: _descriptionController.text.trim(),
+        imageUrl: _imageUrlController.text.trim(),
+        ingredients: ingredients,
+        instructions: instructions,
+        category: _selectedCategory,
+        cookingTime: int.parse(_cookingTimeController.text),
+        servings: int.parse(_servingsController.text),
+        difficulty: _selectedDifficulty,
+        createdBy: user.uid,
+        createdAt: widget.recipe?.createdAt ?? DateTime.now(),
+        tags: _tags,
+        rating: widget.recipe?.rating ?? 0.0,
+        ratingCount: widget.recipe?.ratingCount ?? 0,
+      );
+
+      if (widget.recipe == null) {
+        // Thêm mới
+        await _firestoreService.addRecipe(recipe);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đã thêm công thức thành công!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      } else {
+        // Cập nhật
+        await _firestoreService.updateRecipe(recipe);
+        ScaffoldMessenger.of(context).showSnackBar(
+          const SnackBar(
+            content: Text('Đã cập nhật công thức thành công!'),
+            backgroundColor: Colors.green,
+          ),
+        );
+      }
+
+      Navigator.pop(context);
+    } catch (e) {
+      ScaffoldMessenger.of(context).showSnackBar(
+        SnackBar(
+          content: Text('Lỗi: ${e.toString()}'),
+          backgroundColor: Colors.red,
+        ),
+      );
+    } finally {
+      setState(() {
+        _isLoading = false;
+      });
+    }
+  }
+
+  @override
+  Widget build(BuildContext context) {
+    return Scaffold(
+      body: Container(
+        decoration: const BoxDecoration(
+          gradient: LinearGradient(
+            begin: Alignment.topCenter,
+            end: Alignment.bottomCenter,
+            colors: [
+              Color(0xFFF8F9FA),
+              Color(0xFFFFFFFF),
+            ],
+          ),
+        ),
+        child: SafeArea(
+          child: Column(
+            children: [
+              _buildAppBar(),
+              Expanded(
+                child: Form(
+                  key: _formKey,
+                  child: SingleChildScrollView(
+                    padding: const EdgeInsets.all(20),
+                    child: Column(
+                      crossAxisAlignment: CrossAxisAlignment.start,
+                      children: [
+                        _buildSectionTitle('Thông tin cơ bản'),
+                        _buildBasicInfoSection(),
+                        const SizedBox(height: 30),
+
+                        _buildSectionTitle('Nguyên liệu'),
+                        _buildIngredientsSection(),
+                        const SizedBox(height: 30),
+
+                        _buildSectionTitle('Cách làm'),
+                        _buildInstructionsSection(),
+                        const SizedBox(height: 30),
+
+                        _buildSectionTitle('Thông tin bổ sung'),
+                        _buildAdditionalInfoSection(),
+                        const SizedBox(height: 100), // Space for floating button
+                      ],
+                    ),
+                  ),
+                ),
+              ),
+            ],
+          ),
+        ),
+      ),
+      floatingActionButton: _buildSaveButton(),
+      floatingActionButtonLocation: FloatingActionButtonLocation.centerFloat,
+    );
+  }
+
+  Widget _buildAppBar() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      child: Row(
+        children: [
+          Container(
+            decoration: BoxDecoration(
+              color: Colors.white,
+              shape: BoxShape.circle,
+              boxShadow: [
+                BoxShadow(
+                  color: Colors.grey.withOpacity(0.1),
+                  spreadRadius: 1,
+                  blurRadius: 10,
+                ),
+              ],
+            ),
+            child: IconButton(
+              icon: const Icon(Icons.arrow_back, color: Color(0xFFFF6B6B)),
+              onPressed: () => Navigator.pop(context),
+            ),
+          ),
+          const SizedBox(width: 16),
+          Expanded(
+            child: Text(
+              widget.recipe == null ? 'Thêm công thức mới' : 'Chỉnh sửa công thức',
+              style: const TextStyle(
+                fontSize: 24,
+                fontWeight: FontWeight.bold,
+                color: Color(0xFF2D3748),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSectionTitle(String title) {
+    return Padding(
+      padding: const EdgeInsets.only(bottom: 16),
+      child: Row(
+        children: [
+          Container(
+            width: 4,
+            height: 20,
+            decoration: BoxDecoration(
+              color: const Color(0xFFFF6B6B),
+              borderRadius: BorderRadius.circular(2),
+            ),
+          ),
+          const SizedBox(width: 12),
+          Text(
+            title,
+            style: const TextStyle(
+              fontSize: 20,
+              fontWeight: FontWeight.bold,
+              color: Color(0xFF2D3748),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildBasicInfoSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          _buildTextField(
+            controller: _titleController,
+            label: 'Tên món ăn',
+            icon: Icons.restaurant_menu,
+            validator: (value) => value?.isEmpty == true ? 'Vui lòng nhập tên món ăn' : null,
+          ),
+          const SizedBox(height: 16),
+
+          _buildTextField(
+            controller: _descriptionController,
+            label: 'Mô tả',
+            icon: Icons.description,
+            maxLines: 3,
+            validator: (value) => value?.isEmpty == true ? 'Vui lòng nhập mô tả' : null,
+          ),
+          const SizedBox(height: 16),
+
+          _buildTextField(
+            controller: _imageUrlController,
+            label: 'URL hình ảnh',
+            icon: Icons.image,
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(
+                child: _buildTextField(
+                  controller: _cookingTimeController,
+                  label: 'Thời gian (phút)',
+                  icon: Icons.access_time,
+                  keyboardType: TextInputType.number,
+                  validator: (value) => value?.isEmpty == true ? 'Nhập thời gian' : null,
+                ),
+              ),
+              const SizedBox(width: 16),
+              Expanded(
+                child: _buildTextField(
+                  controller: _servingsController,
+                  label: 'Số người ăn',
+                  icon: Icons.people,
+                  keyboardType: TextInputType.number,
+                  validator: (value) => value?.isEmpty == true ? 'Nhập số người' : null,
+                ),
+              ),
+            ],
+          ),
+          const SizedBox(height: 16),
+
+          Row(
+            children: [
+              Expanded(child: _buildCategoryDropdown()),
+              const SizedBox(width: 16),
+              Expanded(child: _buildDifficultyDropdown()),
+            ],
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildTextField({
+    required TextEditingController controller,
+    required String label,
+    required IconData icon,
+    int maxLines = 1,
+    TextInputType? keyboardType,
+    String? Function(String?)? validator,
+  }) {
+    return TextFormField(
+      controller: controller,
+      maxLines: maxLines,
+      keyboardType: keyboardType,
+      validator: validator,
+      decoration: InputDecoration(
+        labelText: label,
+        prefixIcon: Icon(icon, color: const Color(0xFFFF6B6B)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+      ),
+    );
+  }
+
+  Widget _buildCategoryDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedCategory,
+      decoration: InputDecoration(
+        labelText: 'Danh mục',
+        prefixIcon: const Icon(Icons.category, color: Color(0xFFFF6B6B)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+      ),
+      items: _categories.map((category) {
+        return DropdownMenuItem(
+          value: category,
+          child: Text(category),
+        );
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedCategory = value!;
+        });
+      },
+    );
+  }
+
+  Widget _buildDifficultyDropdown() {
+    return DropdownButtonFormField<String>(
+      value: _selectedDifficulty,
+      decoration: InputDecoration(
+        labelText: 'Độ khó',
+        prefixIcon: const Icon(Icons.signal_cellular_alt, color: Color(0xFFFF6B6B)),
+        border: OutlineInputBorder(
+          borderRadius: BorderRadius.circular(15),
+          borderSide: BorderSide.none,
+        ),
+        filled: true,
+        fillColor: Colors.grey[50],
+      ),
+      items: _difficulties.map((difficulty) {
+        return DropdownMenuItem(
+          value: difficulty,
+          child: Text(_difficultyLabels[difficulty]!),
+        );
+      }).toList(),
+      onChanged: (value) {
+        setState(() {
+          _selectedDifficulty = value!;
+        });
+      },
+    );
+  }
+
+  Widget _buildIngredientsSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          ...List.generate(_ingredientControllers.length, (index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _ingredientControllers[index],
+                      decoration: InputDecoration(
+                        labelText: 'Nguyên liệu ${index + 1}',
+                        prefixIcon: const Icon(Icons.kitchen, color: Color(0xFFFF6B6B)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                      ),
+                    ),
+                  ),
+                  if (_ingredientControllers.length > 1) ...[
+                    const SizedBox(width: 8),
+                    IconButton(
+                      icon: const Icon(Icons.remove_circle, color: Colors.red),
+                      onPressed: () {
+                        setState(() {
+                          _ingredientControllers[index].dispose();
+                          _ingredientControllers.removeAt(index);
+                        });
+                      },
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _ingredientControllers.add(TextEditingController());
+                });
+              },
+              icon: const Icon(Icons.add, color: Color(0xFFFF6B6B)),
+              label: const Text(
+                'Thêm nguyên liệu',
+                style: TextStyle(color: Color(0xFFFF6B6B)),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFFF6B6B)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildInstructionsSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        children: [
+          ...List.generate(_instructionControllers.length, (index) {
+            return Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                crossAxisAlignment: CrossAxisAlignment.start,
+                children: [
+                  Expanded(
+                    child: TextFormField(
+                      controller: _instructionControllers[index],
+                      maxLines: 3,
+                      decoration: InputDecoration(
+                        labelText: 'Bước ${index + 1}',
+                        prefixIcon: const Icon(Icons.list_alt, color: Color(0xFFFF6B6B)),
+                        border: OutlineInputBorder(
+                          borderRadius: BorderRadius.circular(15),
+                          borderSide: BorderSide.none,
+                        ),
+                        filled: true,
+                        fillColor: Colors.grey[50],
+                      ),
+                    ),
+                  ),
+                  if (_instructionControllers.length > 1) ...[
+                    const SizedBox(width: 8),
+                    Padding(
+                      padding: const EdgeInsets.only(top: 8),
+                      child: IconButton(
+                        icon: const Icon(Icons.remove_circle, color: Colors.red),
+                        onPressed: () {
+                          setState(() {
+                            _instructionControllers[index].dispose();
+                            _instructionControllers.removeAt(index);
+                          });
+                        },
+                      ),
+                    ),
+                  ],
+                ],
+              ),
+            );
+          }),
+          const SizedBox(height: 8),
+          SizedBox(
+            width: double.infinity,
+            child: OutlinedButton.icon(
+              onPressed: () {
+                setState(() {
+                  _instructionControllers.add(TextEditingController());
+                });
+              },
+              icon: const Icon(Icons.add, color: Color(0xFFFF6B6B)),
+              label: const Text(
+                'Thêm bước',
+                style: TextStyle(color: Color(0xFFFF6B6B)),
+              ),
+              style: OutlinedButton.styleFrom(
+                side: const BorderSide(color: Color(0xFFFF6B6B)),
+                shape: RoundedRectangleBorder(
+                  borderRadius: BorderRadius.circular(15),
+                ),
+              ),
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildAdditionalInfoSection() {
+    return Container(
+      padding: const EdgeInsets.all(20),
+      decoration: BoxDecoration(
+        color: Colors.white,
+        borderRadius: BorderRadius.circular(20),
+        boxShadow: [
+          BoxShadow(
+            color: Colors.grey.withOpacity(0.1),
+            spreadRadius: 1,
+            blurRadius: 10,
+            offset: const Offset(0, 3),
+          ),
+        ],
+      ),
+      child: Column(
+        crossAxisAlignment: CrossAxisAlignment.start,
+        children: [
+          const Text(
+            'Tags (phân cách bằng dấu phẩy)',
+            style: TextStyle(
+              fontSize: 16,
+              fontWeight: FontWeight.w600,
+              color: Color(0xFF2D3748),
+            ),
+          ),
+          const SizedBox(height: 12),
+          TextFormField(
+            initialValue: _tags.join(', '),
+            onChanged: (value) {
+              _tags = value.split(',').map((tag) => tag.trim()).where((tag) => tag.isNotEmpty).toList();
+            },
+            decoration: InputDecoration(
+              hintText: 'Ví dụ: nhanh, dễ làm, ít dầu mỡ',
+              prefixIcon: const Icon(Icons.tag, color: Color(0xFFFF6B6B)),
+              border: OutlineInputBorder(
+                borderRadius: BorderRadius.circular(15),
+                borderSide: BorderSide.none,
+              ),
+              filled: true,
+              fillColor: Colors.grey[50],
+            ),
+          ),
+        ],
+      ),
+    );
+  }
+
+  Widget _buildSaveButton() {
+    return Container(
+      width: double.infinity,
+      margin: const EdgeInsets.symmetric(horizontal: 20),
+      child: ElevatedButton(
+        onPressed: _isLoading ? null : _saveRecipe,
+        style: ElevatedButton.styleFrom(
+          backgroundColor: const Color(0xFFFF6B6B),
+          foregroundColor: Colors.white,
+          padding: const EdgeInsets.symmetric(vertical: 16),
+          shape: RoundedRectangleBorder(
+            borderRadius: BorderRadius.circular(25),
+          ),
+          elevation: 8,
+        ),
+        child: _isLoading
+            ? const SizedBox(
+                height: 20,
+                width: 20,
+                child: CircularProgressIndicator(
+                  strokeWidth: 2,
+                  valueColor: AlwaysStoppedAnimation<Color>(Colors.white),
+                ),
+              )
+            : Row(
+                mainAxisAlignment: MainAxisAlignment.center,
+                children: [
+                  Icon(widget.recipe == null ? Icons.add : Icons.save),
+                  const SizedBox(width: 8),
+                  Text(
+                    widget.recipe == null ? 'Thêm công thức' : 'Cập nhật công thức',
+                    style: const TextStyle(
+                      fontSize: 16,
+                      fontWeight: FontWeight.bold,
+                    ),
+                  ),
+                ],
+              ),
+      ),
+    );
+  }
+}

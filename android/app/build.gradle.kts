@@ -3,6 +3,7 @@ plugins {
     id("kotlin-android")
     // The Flutter Gradle Plugin must be applied after the Android and Kotlin Gradle plugins.
     id("dev.flutter.flutter-gradle-plugin")
+    id("com.google.gms.google-services") // Thêm dòng này
 }
 
 android {
@@ -47,6 +48,12 @@ flutter {
 dependencies {
     // ...existing dependencies...
     coreLibraryDesugaring("com.android.tools:desugar_jdk_libs:2.0.4")
+
+    // Firestore
+    implementation("com.google.firebase:firebase-firestore-ktx:25.0.0")
+
+    // Firebase Core (tuỳ chọn)
+    implementation("com.google.firebase:firebase-analytics-ktx")
 }
 
 apply(plugin = "com.google.gms.google-services")
