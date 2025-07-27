@@ -253,10 +253,12 @@ class _RecipeScreenState extends State<RecipeScreen>
   }
 
   Widget _buildSearchBar() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
         borderRadius: BorderRadius.circular(25),
         boxShadow: [
           BoxShadow(
@@ -269,6 +271,9 @@ class _RecipeScreenState extends State<RecipeScreen>
       ),
       child: TextField(
         controller: _searchController,
+        style: TextStyle(
+          color: isDarkMode ? Colors.white : Colors.black,
+        ),
         onChanged: (value) {
           setState(() {
             _searchQuery = value;
@@ -276,10 +281,19 @@ class _RecipeScreenState extends State<RecipeScreen>
         },
         decoration: InputDecoration(
           hintText: 'Tìm kiếm công thức nấu ăn...',
-          prefixIcon: const Icon(Icons.search, color: Color(0xFFFF6B6B)),
+          hintStyle: TextStyle(
+            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+          ),
+          prefixIcon: Icon(
+            Icons.search,
+            color: const Color(0xFFFF6B6B),
+          ),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-            icon: const Icon(Icons.clear, color: Colors.grey),
+            icon: Icon(
+              Icons.clear,
+              color: isDarkMode ? Colors.white : Colors.grey,
+            ),
             onPressed: () {
               _searchController.clear();
               setState(() {
@@ -298,6 +312,7 @@ class _RecipeScreenState extends State<RecipeScreen>
     );
   }
 
+
   Widget _buildCategoryTabs({bool isAdmin = false}) {
     final tabs = [
       const Tab(icon: Icon(Icons.home), text: 'Trang chủ'),
@@ -305,6 +320,7 @@ class _RecipeScreenState extends State<RecipeScreen>
       const Tab(icon: Icon(Icons.category), text: 'Danh mục'),
       const Tab(icon: Icon(Icons.person), text: 'Cá nhân'),
     ];
+
     if (_tabController.length != 4) {
       _tabController.dispose();
       _tabController = TabController(
@@ -313,20 +329,36 @@ class _RecipeScreenState extends State<RecipeScreen>
         animationDuration: const Duration(milliseconds: 400),
       );
     }
+
     return Container(
       margin: const EdgeInsets.symmetric(vertical: 10),
+      decoration: BoxDecoration(
+        color: Theme.of(context).cardColor,
+        boxShadow: [
+          BoxShadow(
+            color: Theme.of(context).brightness == Brightness.dark
+                ? Colors.black.withOpacity(0.2)
+                : Colors.grey.withOpacity(0.1),
+            blurRadius: 8,
+            offset: const Offset(0, 2),
+          ),
+        ],
+        borderRadius: BorderRadius.circular(12),
+      ),
       child: TabBar(
         controller: _tabController,
         isScrollable: false,
         labelColor: const Color(0xFFFF6B6B),
-        unselectedLabelColor: Colors.grey,
+        unselectedLabelColor: Theme.of(context).unselectedWidgetColor,
         indicatorColor: const Color(0xFFFF6B6B),
         indicatorWeight: 3,
+        indicatorPadding: const EdgeInsets.symmetric(horizontal: 16),
         labelStyle: const TextStyle(fontWeight: FontWeight.bold),
         tabs: tabs,
       ),
     );
   }
+
 
   Widget _buildCategoryFilter() {
     // Bộ lọc category dạng horizontal scroll, chỉ hiển thị ở tab Trang chủ
@@ -648,7 +680,7 @@ class _RecipeScreenState extends State<RecipeScreen>
         crossAxisSpacing: 15,
         mainAxisSpacing: 15,
       ),
-      itemCount: _categories.length - 1, // Bỏ 'Tất cả'
+      itemCount: _categories.length - 1,
       itemBuilder: (context, index) {
         final category = _categories[index + 1];
         return _buildCategoryCard(category);
@@ -676,11 +708,13 @@ class _RecipeScreenState extends State<RecipeScreen>
       },
       child: Container(
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: Theme.of(context).cardColor,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Theme.of(context).brightness == Brightness.dark
+                  ? Colors.black.withOpacity(0.2)
+                  : Colors.grey.withOpacity(0.1),
               spreadRadius: 1,
               blurRadius: 10,
               offset: const Offset(0, 3),
@@ -705,20 +739,26 @@ class _RecipeScreenState extends State<RecipeScreen>
             const SizedBox(height: 12),
             Text(
               category,
-              style: const TextStyle(
+              style: TextStyle(
                 fontWeight: FontWeight.bold,
                 fontSize: 16,
-                color: Color(0xFF2D3748),
+                color: Theme.of(context).brightness == Brightness.dark
+                    ? Colors.white
+                    : const Color(0xFF2D3748),
               ),
               textAlign: TextAlign.center,
             ),
+
           ],
         ),
       ),
     );
   }
 
+
   Widget _buildProfileTab() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return SingleChildScrollView(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -727,7 +767,7 @@ class _RecipeScreenState extends State<RecipeScreen>
           Container(
             padding: const EdgeInsets.all(20),
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDarkMode ? Colors.grey[850] : Colors.white,
               borderRadius: BorderRadius.circular(20),
               boxShadow: [
                 BoxShadow(
@@ -752,15 +792,18 @@ class _RecipeScreenState extends State<RecipeScreen>
                 const SizedBox(height: 16),
                 Text(
                   _currentUser?.name ?? 'User',
-                  style: const TextStyle(
+                  style: TextStyle(
                     fontSize: 24,
                     fontWeight: FontWeight.bold,
-                    color: Color(0xFF2D3748),
+                    color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
                   ),
                 ),
                 Text(
                   _currentUser?.email ?? '',
-                  style: TextStyle(fontSize: 16, color: Colors.grey[600]),
+                  style: TextStyle(
+                    fontSize: 16,
+                    color: isDarkMode ? Colors.grey[300] : Colors.grey[600],
+                  ),
                 ),
                 const SizedBox(height: 16),
                 if (_currentUser?.isAdmin == true)
@@ -768,10 +811,10 @@ class _RecipeScreenState extends State<RecipeScreen>
                     icon: const Icon(Icons.admin_panel_settings),
                     label: const Text('Chức năng Admin'),
                     style: ElevatedButton.styleFrom(
-                      backgroundColor:
-                          Theme.of(context).brightness == Brightness.dark
+                      backgroundColor: isDarkMode
                           ? Colors.deepPurple
                           : Colors.black,
+                      foregroundColor: Colors.white,
                     ),
                     onPressed: () {
                       Navigator.of(context).push(
@@ -787,14 +830,17 @@ class _RecipeScreenState extends State<RecipeScreen>
                     _buildStatItem(
                       'Công thức',
                       '${_currentUser?.recipesCreated ?? 0}',
+                      isDarkMode,
                     ),
                     _buildStatItem(
                       'Yêu thích',
                       '${_currentUser?.favoriteRecipes.length ?? 0}',
+                      isDarkMode,
                     ),
                     _buildStatItem(
                       'Cấp độ',
                       _currentUser?.isAdmin == true ? 'Admin' : 'User',
+                      isDarkMode,
                     ),
                   ],
                 ),
@@ -830,7 +876,8 @@ class _RecipeScreenState extends State<RecipeScreen>
     );
   }
 
-  Widget _buildStatItem(String label, String value) {
+
+  Widget _buildStatItem(String label, String value, bool isDarkMode) {
     return Column(
       children: [
         Text(
@@ -841,16 +888,25 @@ class _RecipeScreenState extends State<RecipeScreen>
             color: Color(0xFFFF6B6B),
           ),
         ),
-        Text(label, style: TextStyle(fontSize: 14, color: Colors.grey[600])),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 14,
+            color: isDarkMode ? Colors.grey[300] : Colors.grey[600],
+          ),
+        ),
       ],
     );
   }
 
+
   Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.only(bottom: 10),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
         borderRadius: BorderRadius.circular(15),
         boxShadow: [
           BoxShadow(
@@ -862,13 +918,27 @@ class _RecipeScreenState extends State<RecipeScreen>
         ],
       ),
       child: ListTile(
-        leading: Icon(icon, color: const Color(0xFFFF6B6B)),
-        title: Text(title),
-        trailing: const Icon(Icons.arrow_forward_ios, size: 16),
+        leading: Icon(
+          icon,
+          color: const Color(0xFFFF6B6B),
+        ),
+        title: Text(
+          title,
+          style: TextStyle(
+            color: isDarkMode ? Colors.white : Colors.black,
+            fontSize: 16,
+          ),
+        ),
+        trailing: Icon(
+          Icons.arrow_forward_ios,
+          size: 16,
+          color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
+        ),
         onTap: onTap,
       ),
     );
   }
+
 
   Widget _buildEmptyState({String message = 'Không có công thức nào'}) {
     return Center(

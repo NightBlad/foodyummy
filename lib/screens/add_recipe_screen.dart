@@ -234,13 +234,17 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
   @override
   Widget build(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Scaffold(
       body: Container(
-        decoration: const BoxDecoration(
+        decoration: BoxDecoration(
           gradient: LinearGradient(
             begin: Alignment.topCenter,
             end: Alignment.bottomCenter,
-            colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
+            colors: isDarkMode
+                ? [Colors.grey[900]!, Colors.grey[850]!] // Gradient tối cho dark mode
+                : [Color(0xFFF8F9FA), Color(0xFFFFFFFF)], // Gradient sáng cho light mode
           ),
         ),
         child: SafeArea(
@@ -255,20 +259,20 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     child: Column(
                       crossAxisAlignment: CrossAxisAlignment.start,
                       children: [
-                        _buildSectionTitle('Thông tin cơ bản'),
-                        _buildBasicInfoSection(),
+                        _buildSectionTitle(context, 'Thông tin cơ bản'),
+                        _buildBasicInfoSection(context),
                         const SizedBox(height: 30),
 
-                        _buildSectionTitle('Nguyên liệu'),
-                        _buildIngredientsSection(),
+                        _buildSectionTitle(context, 'Nguyên liệu'),
+                        _buildIngredientsSection(context),
                         const SizedBox(height: 30),
 
-                        _buildSectionTitle('Cách làm'),
-                        _buildInstructionsSection(),
+                        _buildSectionTitle(context, 'Cách làm'),
+                        _buildInstructionsSection(context),
                         const SizedBox(height: 30),
 
-                        _buildSectionTitle('Thông tin bổ sung'),
-                        _buildAdditionalInfoSection(),
+                        _buildSectionTitle(context, 'Thông tin bổ sung'),
+                        _buildAdditionalInfoSection(context),
                         const SizedBox(
                           height: 100,
                         ), // Space for floating button
@@ -287,13 +291,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   }
 
   Widget _buildAppBar() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(20),
       child: Row(
         children: [
           Container(
             decoration: BoxDecoration(
-              color: Colors.white,
+              color: isDarkMode ? Colors.grey[850] : Colors.white,
               shape: BoxShape.circle,
               boxShadow: [
                 BoxShadow(
@@ -314,10 +320,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               widget.recipe == null
                   ? 'Thêm công thức mới'
                   : 'Chỉnh sửa công thức',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 24,
                 fontWeight: FontWeight.bold,
-                color: Color(0xFF2D3748),
+                color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
               ),
             ),
           ),
@@ -326,7 +332,9 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
-  Widget _buildSectionTitle(String title) {
+  Widget _buildSectionTitle(BuildContext context, String title) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Padding(
       padding: const EdgeInsets.only(bottom: 16),
       child: Row(
@@ -342,10 +350,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           const SizedBox(width: 12),
           Text(
             title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 20,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2D3748),
+              color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
             ),
           ),
         ],
@@ -353,19 +361,23 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
-  Widget _buildBasicInfoSection() {
+
+  Widget _buildBasicInfoSection(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
+          if (!isDarkMode)
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
         ],
       ),
       child: Column(
@@ -378,7 +390,6 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             value?.isEmpty == true ? 'Vui lòng nhập tên món ăn' : null,
           ),
           const SizedBox(height: 16),
-
           _buildTextField(
             controller: _descriptionController,
             label: 'Mô tả',
@@ -388,11 +399,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             value?.isEmpty == true ? 'Vui lòng nhập mô tả' : null,
           ),
           const SizedBox(height: 16),
-
-          // Thêm Image Picker
           _buildImagePicker(),
           const SizedBox(height: 16),
-
           Row(
             children: [
               Expanded(
@@ -419,24 +427,25 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             ],
           ),
           const SizedBox(height: 16),
-
           Row(children: [Expanded(child: _buildCategoryDropdown())]),
           const SizedBox(height: 16),
-
           Row(children: [Expanded(child: _buildDifficultyDropdown())]),
         ],
       ),
     );
   }
 
+
   Widget _buildImagePicker() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: _pickImage,
       child: Container(
         height: 150,
         width: double.infinity,
         decoration: BoxDecoration(
-          color: Colors.grey[200],
+          color: isDarkMode ? Colors.grey[800] : Colors.grey[200],
           borderRadius: BorderRadius.circular(20),
           border: Border.all(
             color: const Color(0xFFFF6B6B),
@@ -447,37 +456,39 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           borderRadius: BorderRadius.circular(20),
           child: _selectedImage != null
               ? Image.file(
-                  _selectedImage!,
-                  fit: BoxFit.cover,
-                  width: double.infinity,
-                )
+            _selectedImage!,
+            fit: BoxFit.cover,
+            width: double.infinity,
+          )
               : _currentImageUrl != null && _currentImageUrl!.isNotEmpty
-                  ? HybridImageWidget(
-                      imagePath: _currentImageUrl!,
-                      fit: BoxFit.cover,
-                      width: double.infinity,
-                      height: 150,
-                    )
-                  : _buildImagePlaceholder(),
+              ? HybridImageWidget(
+            imagePath: _currentImageUrl!,
+            fit: BoxFit.cover,
+            width: double.infinity,
+            height: 150,
+          )
+              : _buildImagePlaceholder(),
         ),
       ),
     );
   }
 
   Widget _buildImagePlaceholder() {
-    return const Column(
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
+    return Column(
       mainAxisAlignment: MainAxisAlignment.center,
       children: [
         Icon(
           Icons.camera_alt,
-          color: Color(0xFFFF6B6B),
+          color: const Color(0xFFFF6B6B),
           size: 40,
         ),
-        SizedBox(height: 8),
+        const SizedBox(height: 8),
         Text(
           'Nhấn để chọn ảnh',
           style: TextStyle(
-            color: Color(0xFFFF6B6B),
+            color: isDarkMode ? Colors.grey[200] : const Color(0xFFFF6B6B),
             fontSize: 16,
             fontWeight: FontWeight.w500,
           ),
@@ -494,12 +505,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     TextInputType? keyboardType,
     String? Function(String?)? validator,
   }) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return TextFormField(
       controller: controller,
       maxLines: maxLines,
       keyboardType: keyboardType,
       validator: validator,
-      // Cấu hình đầy đủ để hỗ trợ tiếng Việt
       enableIMEPersonalizedLearning: true,
       textInputAction: maxLines > 1 ? TextInputAction.newline : TextInputAction.next,
       autocorrect: true,
@@ -513,23 +525,23 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           borderSide: BorderSide.none,
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[50], // Thay đổi fillColor
         hintText: _getHintText(label),
-        // Thêm style cho text tiếng Việt
-        labelStyle: const TextStyle(
+        labelStyle: TextStyle(
           fontFamily: 'Roboto',
           fontWeight: FontWeight.w400,
+          color: isDarkMode ? Colors.grey[200] : Colors.grey[700],
         ),
         hintStyle: TextStyle(
-          color: Colors.grey[600],
+          color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
           fontFamily: 'Roboto',
         ),
       ),
-      // Thêm style cho text nhập vào
-      style: const TextStyle(
+      style: TextStyle(
         fontFamily: 'Roboto',
         fontSize: 16,
         fontWeight: FontWeight.w400,
+        color: isDarkMode ? Colors.white : Colors.black,
       ),
     );
   }
@@ -550,6 +562,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   }
 
   Widget _buildCategoryDropdown() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return DropdownButtonFormField<String>(
       value: _selectedCategory,
       decoration: InputDecoration(
@@ -560,10 +574,21 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           borderSide: BorderSide.none,
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[50],
+        labelStyle: TextStyle(
+          color: isDarkMode ? Colors.grey[200] : Colors.grey[700],
+        ),
       ),
       items: _categories.map((category) {
-        return DropdownMenuItem(value: category, child: Text(category));
+        return DropdownMenuItem(
+          value: category,
+          child: Text(
+            category,
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+          ),
+        );
       }).toList(),
       onChanged: (value) {
         setState(() {
@@ -574,6 +599,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
   }
 
   Widget _buildDifficultyDropdown() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return DropdownButtonFormField<String>(
       value: _selectedDifficulty,
       decoration: InputDecoration(
@@ -587,12 +614,20 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           borderSide: BorderSide.none,
         ),
         filled: true,
-        fillColor: Colors.grey[50],
+        fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[50],
+        labelStyle: TextStyle(
+          color: isDarkMode ? Colors.grey[200] : Colors.grey[700],
+        ),
       ),
       items: _difficulties.map((difficulty) {
         return DropdownMenuItem(
           value: difficulty,
-          child: Text(_difficultyLabels[difficulty]!),
+          child: Text(
+            _difficultyLabels[difficulty]!,
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
+          ),
         );
       }).toList(),
       onChanged: (value) {
@@ -603,11 +638,13 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
-  Widget _buildIngredientsSection() {
+  Widget _buildIngredientsSection(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -628,9 +665,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   Expanded(
                     child: TextFormField(
                       controller: _ingredientControllers[index],
-                      // Thêm hỗ trợ tiếng Việt
                       enableIMEPersonalizedLearning: true,
                       textInputAction: TextInputAction.next,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Nguyên liệu ${index + 1}',
                         hintText: 'Ví dụ: 500g thịt bò, 2 quả cà chua...',
@@ -638,12 +677,19 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                           Icons.kitchen,
                           color: Color(0xFFFF6B6B),
                         ),
+                        labelStyle: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                        hintStyle: TextStyle(
+                          color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                        filled: true,
+                        fillColor:
+                        isDarkMode ? Colors.grey[800] : Colors.grey[50],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
                           borderSide: BorderSide.none,
                         ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
                       ),
                     ),
                   ),
@@ -690,11 +736,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
-  Widget _buildInstructionsSection() {
+
+  Widget _buildInstructionsSection(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -717,9 +766,11 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                     child: TextFormField(
                       controller: _instructionControllers[index],
                       maxLines: 3,
-                      // Thêm hỗ trợ tiếng Việt
                       enableIMEPersonalizedLearning: true,
                       textInputAction: TextInputAction.newline,
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.white : Colors.black,
+                      ),
                       decoration: InputDecoration(
                         labelText: 'Bước ${index + 1}',
                         hintText: 'Ví dụ: Rửa sạch thịt, cắt thành miếng vừa ăn...',
@@ -727,12 +778,19 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                           Icons.list_alt,
                           color: Color(0xFFFF6B6B),
                         ),
+                        labelStyle: TextStyle(
+                          color: isDarkMode ? Colors.white : Colors.black,
+                        ),
+                        hintStyle: TextStyle(
+                          color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                        ),
+                        filled: true,
+                        fillColor:
+                        isDarkMode ? Colors.grey[800] : Colors.grey[50],
                         border: OutlineInputBorder(
                           borderRadius: BorderRadius.circular(15),
                           borderSide: BorderSide.none,
                         ),
-                        filled: true,
-                        fillColor: Colors.grey[50],
                       ),
                     ),
                   ),
@@ -785,11 +843,14 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
-  Widget _buildAdditionalInfoSection() {
+
+  Widget _buildAdditionalInfoSection(BuildContext context) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -803,12 +864,12 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       child: Column(
         crossAxisAlignment: CrossAxisAlignment.start,
         children: [
-          const Text(
+          Text(
             'Tags (phân cách bằng dấu phẩy)',
             style: TextStyle(
               fontSize: 16,
               fontWeight: FontWeight.w600,
-              color: Color(0xFF2D3748),
+              color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
             ),
           ),
           const SizedBox(height: 12),
@@ -821,15 +882,21 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                   .where((tag) => tag.isNotEmpty)
                   .toList();
             },
+            style: TextStyle(
+              color: isDarkMode ? Colors.white : Colors.black,
+            ),
             decoration: InputDecoration(
               hintText: 'Ví dụ: nhanh, dễ làm, ít dầu mỡ',
+              hintStyle: TextStyle(
+                color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+              ),
               prefixIcon: const Icon(Icons.tag, color: Color(0xFFFF6B6B)),
               border: OutlineInputBorder(
                 borderRadius: BorderRadius.circular(15),
                 borderSide: BorderSide.none,
               ),
               filled: true,
-              fillColor: Colors.grey[50],
+              fillColor: isDarkMode ? Colors.grey[800] : Colors.grey[50],
             ),
           ),
         ],
@@ -837,7 +904,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
     );
   }
 
+
   Widget _buildSaveButton() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       width: double.infinity,
       margin: const EdgeInsets.symmetric(horizontal: 20),
@@ -864,15 +934,19 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
             : Row(
           mainAxisAlignment: MainAxisAlignment.center,
           children: [
-            Icon(widget.recipe == null ? Icons.add : Icons.save),
+            Icon(
+              widget.recipe == null ? Icons.add : Icons.save,
+              color: Colors.white,
+            ),
             const SizedBox(width: 8),
             Text(
               widget.recipe == null
                   ? 'Thêm công thức'
                   : 'Cập nhật công thức',
-              style: const TextStyle(
+              style: TextStyle(
                 fontSize: 16,
                 fontWeight: FontWeight.bold,
+                color: Colors.white,
               ),
             ),
           ],

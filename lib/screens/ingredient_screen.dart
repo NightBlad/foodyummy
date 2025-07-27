@@ -158,7 +158,7 @@ class _IngredientScreenState extends State<IngredientScreen> {
             const SizedBox(height: 16),
             Expanded(
               child: filteredIngredients.isEmpty
-                  ? const Center(child: Text('Kh��ng tìm thấy nguyên liệu'))
+                  ? const Center(child: Text('Không tìm thấy nguyên liệu'))
                   : ListView.builder(
                 itemCount: filteredIngredients.length,
                 itemBuilder: (context, index) {
