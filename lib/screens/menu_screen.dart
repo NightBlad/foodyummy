@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
 import '../models/user.dart';
 import '../services/firestore_service.dart';
-import '../widgets/hybrid_image_widget.dart';
 import 'recipe_detail_screen.dart';
 import 'add_recipe_screen.dart';
 import 'admin_panel_screen.dart';
@@ -63,7 +62,8 @@ class _RecipeScreenState extends State<RecipeScreen>
     final user = FirebaseAuth.instance.currentUser;
     if (user != null) {
       final userData = await _firestoreService.getUser(user.uid);
-      if (mounted) { // Kiểm tra widget còn mounted trước khi setState
+      if (mounted) {
+        // Kiểm tra widget còn mounted trước khi setState
         setState(() {
           _currentUser = userData;
         });
@@ -155,10 +155,10 @@ class _RecipeScreenState extends State<RecipeScreen>
             gradient: Theme.of(context).brightness == Brightness.dark
                 ? null
                 : const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
-            ),
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
+                  ),
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.grey[900]
                 : null,
@@ -271,9 +271,7 @@ class _RecipeScreenState extends State<RecipeScreen>
       ),
       child: TextField(
         controller: _searchController,
-        style: TextStyle(
-          color: isDarkMode ? Colors.white : Colors.black,
-        ),
+        style: TextStyle(color: isDarkMode ? Colors.white : Colors.black),
         onChanged: (value) {
           setState(() {
             _searchQuery = value;
@@ -284,23 +282,20 @@ class _RecipeScreenState extends State<RecipeScreen>
           hintStyle: TextStyle(
             color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
           ),
-          prefixIcon: Icon(
-            Icons.search,
-            color: const Color(0xFFFF6B6B),
-          ),
+          prefixIcon: Icon(Icons.search, color: const Color(0xFFFF6B6B)),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-            icon: Icon(
-              Icons.clear,
-              color: isDarkMode ? Colors.white : Colors.grey,
-            ),
-            onPressed: () {
-              _searchController.clear();
-              setState(() {
-                _searchQuery = '';
-              });
-            },
-          )
+                  icon: Icon(
+                    Icons.clear,
+                    color: isDarkMode ? Colors.white : Colors.grey,
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -311,7 +306,6 @@ class _RecipeScreenState extends State<RecipeScreen>
       ),
     );
   }
-
 
   Widget _buildCategoryTabs({bool isAdmin = false}) {
     final tabs = [
@@ -359,7 +353,6 @@ class _RecipeScreenState extends State<RecipeScreen>
     );
   }
 
-
   Widget _buildCategoryFilter() {
     // Bộ lọc category dạng horizontal scroll, chỉ hiển thị ở tab Trang chủ
     if (_tabController.index != 0) return const SizedBox.shrink();
@@ -406,7 +399,9 @@ class _RecipeScreenState extends State<RecipeScreen>
 
   Widget _buildRecipeList() {
     return StreamBuilder<List<Recipe>>(
-      key: ValueKey('${_searchQuery}_${_selectedCategory}'), // Key để force rebuild khi filter thay đổi
+      key: ValueKey(
+        '${_searchQuery}_${_selectedCategory}',
+      ), // Key để force rebuild khi filter thay đổi
       stream: _searchQuery.isNotEmpty
           ? _firestoreService.searchRecipes(_searchQuery)
           : _selectedCategory == 'Tất cả'
@@ -426,7 +421,8 @@ class _RecipeScreenState extends State<RecipeScreen>
           if (_searchQuery.isNotEmpty) {
             message = 'Không tìm thấy công thức cho "$_searchQuery"';
           } else if (_selectedCategory != 'Tất cả') {
-            message = 'Chưa có công thức nào trong danh mục "$_selectedCategory"';
+            message =
+                'Chưa có công thức nào trong danh mục "$_selectedCategory"';
           }
           return _buildEmptyState(message: message);
         }
@@ -492,7 +488,11 @@ class _RecipeScreenState extends State<RecipeScreen>
                             fit: BoxFit.cover,
                             errorWidget: Container(
                               color: Colors.grey[200],
-                              child: const Icon(Icons.restaurant, size: 50, color: Colors.grey),
+                              child: const Icon(
+                                Icons.restaurant,
+                                size: 50,
+                                color: Colors.grey,
+                              ),
                             ),
                           ),
                           Positioned(
@@ -513,9 +513,9 @@ class _RecipeScreenState extends State<RecipeScreen>
                               child: IconButton(
                                 icon: Icon(
                                   _currentUser?.favoriteRecipes.contains(
-                                    recipe.id,
-                                  ) ==
-                                      true
+                                            recipe.id,
+                                          ) ==
+                                          true
                                       ? Icons.favorite
                                       : Icons.favorite_border,
                                   color: const Color(0xFFFF6B6B),
@@ -535,7 +535,11 @@ class _RecipeScreenState extends State<RecipeScreen>
                       )
                     : Container(
                         color: Colors.grey[200],
-                        child: const Icon(Icons.restaurant, size: 50, color: Colors.grey),
+                        child: const Icon(
+                          Icons.restaurant,
+                          size: 50,
+                          color: Colors.grey,
+                        ),
                       ),
               ),
 
@@ -748,13 +752,11 @@ class _RecipeScreenState extends State<RecipeScreen>
               ),
               textAlign: TextAlign.center,
             ),
-
           ],
         ),
       ),
     );
   }
-
 
   Widget _buildProfileTab() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -876,7 +878,6 @@ class _RecipeScreenState extends State<RecipeScreen>
     );
   }
 
-
   Widget _buildStatItem(String label, String value, bool isDarkMode) {
     return Column(
       children: [
@@ -899,7 +900,6 @@ class _RecipeScreenState extends State<RecipeScreen>
     );
   }
 
-
   Widget _buildMenuItem(IconData icon, String title, VoidCallback onTap) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
 
@@ -918,10 +918,7 @@ class _RecipeScreenState extends State<RecipeScreen>
         ],
       ),
       child: ListTile(
-        leading: Icon(
-          icon,
-          color: const Color(0xFFFF6B6B),
-        ),
+        leading: Icon(icon, color: const Color(0xFFFF6B6B)),
         title: Text(
           title,
           style: TextStyle(
@@ -938,7 +935,6 @@ class _RecipeScreenState extends State<RecipeScreen>
       ),
     );
   }
-
 
   Widget _buildEmptyState({String message = 'Không có công thức nào'}) {
     return Center(

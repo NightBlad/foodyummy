@@ -3,7 +3,6 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
 import '../models/user.dart';
 import '../services/firestore_service.dart';
-import '../widgets/hybrid_image_widget.dart';
 import 'add_recipe_screen.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
@@ -33,7 +32,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       final userData = await _firestoreService.getUser(user.uid);
       setState(() {
         _currentUser = userData;
-        _isFavorite = userData?.favoriteRecipes.contains(widget.recipe.id) ?? false;
+        _isFavorite =
+            userData?.favoriteRecipes.contains(widget.recipe.id) ?? false;
       });
     }
   }
@@ -46,14 +46,19 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     });
 
     try {
-      await _firestoreService.toggleFavoriteRecipe(_currentUser!.id, widget.recipe.id);
+      await _firestoreService.toggleFavoriteRecipe(
+        _currentUser!.id,
+        widget.recipe.id,
+      );
       setState(() {
         _isFavorite = !_isFavorite;
       });
 
       ScaffoldMessenger.of(context).showSnackBar(
         SnackBar(
-          content: Text(_isFavorite ? 'Đã thêm vào yêu thích' : 'Đã xóa khỏi yêu thích'),
+          content: Text(
+            _isFavorite ? 'Đã thêm vào yêu thích' : 'Đã xóa khỏi yêu thích',
+          ),
           backgroundColor: _isFavorite ? Colors.green : Colors.orange,
         ),
       );
@@ -153,7 +158,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
         ),
       ),
       actions: [
-        if (_currentUser?.id == widget.recipe.createdBy || _currentUser?.isAdmin == true) ...[
+        if (_currentUser?.id == widget.recipe.createdBy ||
+            _currentUser?.isAdmin == true) ...[
           Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
@@ -176,7 +182,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) => AddRecipeScreen(recipe: widget.recipe),
+                          builder: (context) =>
+                              AddRecipeScreen(recipe: widget.recipe),
                         ),
                       );
                     });
@@ -209,22 +216,27 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     fit: BoxFit.cover,
                     errorWidget: Container(
                       color: Colors.grey[300],
-                      child: const Icon(Icons.restaurant, size: 100, color: Colors.grey),
+                      child: const Icon(
+                        Icons.restaurant,
+                        size: 100,
+                        color: Colors.grey,
+                      ),
                     ),
                   )
                 : Container(
                     color: Colors.grey[300],
-                    child: const Icon(Icons.restaurant, size: 100, color: Colors.grey),
+                    child: const Icon(
+                      Icons.restaurant,
+                      size: 100,
+                      color: Colors.grey,
+                    ),
                   ),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [
-                    Colors.transparent,
-                    Colors.black.withOpacity(0.7),
-                  ],
+                  colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
                 ),
               ),
             ),
@@ -243,7 +255,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
+                padding: const EdgeInsets.symmetric(
+                  horizontal: 12,
+                  vertical: 6,
+                ),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6B6B).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -271,10 +286,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   ),
                   Text(
                     ' (${widget.recipe.ratingCount})',
-                    style: TextStyle(
-                      fontSize: 14,
-                      color: Colors.grey[600],
-                    ),
+                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
                   ),
                 ],
               ),
@@ -336,8 +348,11 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           _buildDivider(),
           _buildInfoItem(
             Icons.signal_cellular_alt,
-            widget.recipe.difficulty == 'easy' ? 'Dễ' :
-            widget.recipe.difficulty == 'medium' ? 'Trung bình' : 'Khó',
+            widget.recipe.difficulty == 'easy'
+                ? 'Dễ'
+                : widget.recipe.difficulty == 'medium'
+                ? 'Trung bình'
+                : 'Khó',
             'Độ khó',
           ),
         ],
@@ -358,23 +373,13 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             color: Color(0xFF2D3748),
           ),
         ),
-        Text(
-          label,
-          style: TextStyle(
-            fontSize: 12,
-            color: Colors.grey[600],
-          ),
-        ),
+        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
       ],
     );
   }
 
   Widget _buildDivider() {
-    return Container(
-      height: 40,
-      width: 1,
-      color: Colors.grey[300],
-    );
+    return Container(height: 40, width: 1, color: Colors.grey[300]);
   }
 
   Widget _buildIngredients() {
@@ -422,32 +427,34 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          ...widget.recipe.ingredients.map((ingredient) => Padding(
-            padding: const EdgeInsets.only(bottom: 12),
-            child: Row(
-              children: [
-                Container(
-                  width: 6,
-                  height: 6,
-                  decoration: const BoxDecoration(
-                    color: Color(0xFFFF6B6B),
-                    shape: BoxShape.circle,
-                  ),
-                ),
-                const SizedBox(width: 12),
-                Expanded(
-                  child: Text(
-                    ingredient,
-                    style: const TextStyle(
-                      fontSize: 16,
-                      color: Color(0xFF2D3748),
-                      height: 1.5,
+          ...widget.recipe.ingredients.map(
+            (ingredient) => Padding(
+              padding: const EdgeInsets.only(bottom: 12),
+              child: Row(
+                children: [
+                  Container(
+                    width: 6,
+                    height: 6,
+                    decoration: const BoxDecoration(
+                      color: Color(0xFFFF6B6B),
+                      shape: BoxShape.circle,
                     ),
                   ),
-                ),
-              ],
+                  const SizedBox(width: 12),
+                  Expanded(
+                    child: Text(
+                      ingredient,
+                      style: const TextStyle(
+                        fontSize: 16,
+                        color: Color(0xFF2D3748),
+                        height: 1.5,
+                      ),
+                    ),
+                  ),
+                ],
+              ),
             ),
-          )),
+          ),
         ],
       ),
     );
@@ -570,7 +577,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           onPressed: () {
             // Implement share functionality
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(content: Text('Tính năng chia sẻ sẽ có trong phiên bản sau')),
+              const SnackBar(
+                content: Text('Tính năng chia sẻ sẽ có trong phiên bản sau'),
+              ),
             );
           },
           backgroundColor: const Color(0xFFFF6B6B),
