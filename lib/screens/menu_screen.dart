@@ -357,6 +357,9 @@ class _RecipeScreenState extends State<RecipeScreen>
   Widget _buildCategoryFilter() {
     // Bộ lọc category dạng horizontal scroll, chỉ hiển thị ở tab Trang chủ
     if (_tabController.index != 0) return const SizedBox.shrink();
+
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       height: 50,
       margin: const EdgeInsets.symmetric(horizontal: 20, vertical: 8),
@@ -366,6 +369,7 @@ class _RecipeScreenState extends State<RecipeScreen>
         itemBuilder: (context, index) {
           final category = _categories[index];
           final isSelected = category == _selectedCategory;
+
           return GestureDetector(
             onTap: () {
               setState(() {
@@ -376,19 +380,24 @@ class _RecipeScreenState extends State<RecipeScreen>
               margin: const EdgeInsets.only(right: 10),
               padding: const EdgeInsets.symmetric(horizontal: 20, vertical: 10),
               decoration: BoxDecoration(
-                color: isSelected ? const Color(0xFFFF6B6B) : Colors.white,
+                color: isSelected
+                    ? const Color(0xFFFF6B6B)
+                    : (isDarkMode ? Colors.grey[800] : Colors.white),
                 borderRadius: BorderRadius.circular(25),
                 border: Border.all(
                   color: isSelected
                       ? const Color(0xFFFF6B6B)
-                      : Colors.grey[300]!,
+                      : (isDarkMode ? Colors.grey[600]! : Colors.grey[300]!),
                 ),
               ),
               child: Text(
                 category,
                 style: TextStyle(
-                  color: isSelected ? Colors.white : Colors.grey[700],
-                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
+                  color: isSelected
+                      ? Colors.white
+                      : (isDarkMode ? Colors.grey[200] : Colors.grey[700]),
+                  fontWeight:
+                  isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ),
@@ -398,7 +407,10 @@ class _RecipeScreenState extends State<RecipeScreen>
     );
   }
 
+
   Widget _buildRecipeList() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       children: [
         _buildCategoryFilter(),
@@ -426,14 +438,19 @@ class _RecipeScreenState extends State<RecipeScreen>
                   message = 'Không tìm thấy công thức cho "$_searchQuery"';
                 } else if (_selectedCategory != 'Tất cả') {
                   message =
-                      'Chưa có công thức nào trong danh mục "$_selectedCategory"';
+                  'Chưa có công thức nào trong danh mục "$_selectedCategory"';
                 }
-                return _buildEmptyState(message: message);
+                return _buildEmptyState(
+                  message: message,
+                );
               }
               return RefreshIndicator(
                 onRefresh: () async {
                   setState(() {});
                 },
+                color: const Color(0xFFFF6B6B),
+                backgroundColor:
+                isDarkMode ? Colors.grey[850] : Colors.white,
                 child: ListView.builder(
                   padding: const EdgeInsets.all(20),
                   itemCount: snapshot.data!.length,
@@ -449,7 +466,10 @@ class _RecipeScreenState extends State<RecipeScreen>
     );
   }
 
+
   Widget _buildRecipeCard(Recipe recipe) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return GestureDetector(
       onTap: () {
         Navigator.push(
@@ -462,11 +482,11 @@ class _RecipeScreenState extends State<RecipeScreen>
       child: Container(
         margin: const EdgeInsets.only(bottom: 20),
         decoration: BoxDecoration(
-          color: Colors.white,
+          color: isDarkMode ? Colors.grey[850] : Colors.white,
           borderRadius: BorderRadius.circular(20),
           boxShadow: [
             BoxShadow(
-              color: Colors.grey.withOpacity(0.1),
+              color: Colors.grey.withOpacity(isDarkMode ? 0.05 : 0.1),
               spreadRadius: 1,
               blurRadius: 10,
               offset: const Offset(0, 3),
@@ -484,59 +504,58 @@ class _RecipeScreenState extends State<RecipeScreen>
                 width: double.infinity,
                 child: recipe.imageUrl.isNotEmpty
                     ? Stack(
-                        children: [
-                          HybridImageWidget(
-                            imageUrl: recipe.imageUrl,
-                            width: double.infinity,
-                            height: 200,
-                            fit: BoxFit.cover,
-                          ),
-                          Positioned(
-                            top: 10,
-                            right: 10,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    spreadRadius: 1,
-                                    blurRadius: 5,
-                                  ),
-                                ],
-                              ),
-                              child: IconButton(
-                                icon: Icon(
-                                  _currentUser?.favoriteRecipes.contains(
-                                            recipe.id,
-                                          ) ==
-                                          true
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color: const Color(0xFFFF6B6B),
-                                ),
-                                onPressed: () {
-                                  if (_currentUser != null) {
-                                    _firestoreService.toggleFavoriteRecipe(
-                                      _currentUser!.id,
-                                      recipe.id,
-                                    );
-                                  }
-                                },
-                              ),
+                  children: [
+                    HybridImageWidget(
+                      imageUrl: recipe.imageUrl,
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    ),
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.grey[800]
+                              : Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              spreadRadius: 1,
+                              blurRadius: 5,
                             ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            _currentUser?.favoriteRecipes.contains(recipe.id) == true
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: const Color(0xFFFF6B6B),
                           ),
-                        ],
-                      )
-                    : Container(
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.restaurant,
-                          size: 50,
-                          color: Colors.grey,
+                          onPressed: () {
+                            if (_currentUser != null) {
+                              _firestoreService.toggleFavoriteRecipe(
+                                _currentUser!.id,
+                                recipe.id,
+                              );
+                            }
+                          },
                         ),
                       ),
+                    ),
+                  ],
+                )
+                    : Container(
+                  color: Colors.grey[200],
+                  child: const Icon(
+                    Icons.restaurant,
+                    size: 50,
+                    color: Colors.grey,
+                  ),
+                ),
               ),
 
               // Recipe info
@@ -577,7 +596,9 @@ class _RecipeScreenState extends State<RecipeScreen>
                             Text(
                               recipe.rating.toStringAsFixed(1),
                               style: TextStyle(
-                                color: Colors.grey[600],
+                                color: isDarkMode
+                                    ? Colors.grey[300]
+                                    : Colors.grey[600],
                                 fontSize: 14,
                               ),
                             ),
@@ -588,31 +609,30 @@ class _RecipeScreenState extends State<RecipeScreen>
                     const SizedBox(height: 12),
                     Text(
                       recipe.title,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 18,
                         fontWeight: FontWeight.bold,
-                        color: Color(0xFF2D3748),
+                        color: isDarkMode
+                            ? Colors.grey[100]
+                            : const Color(0xFF2D3748),
                       ),
                     ),
                     const SizedBox(height: 8),
                     Text(
                       recipe.description,
-                      style: TextStyle(color: Colors.grey[600], fontSize: 14),
+                      style: TextStyle(
+                        color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                        fontSize: 14,
+                      ),
                       maxLines: 2,
                       overflow: TextOverflow.ellipsis,
                     ),
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        _buildInfoChip(
-                          Icons.access_time,
-                          '${recipe.cookingTime} phút',
-                        ),
+                        _buildInfoChip(Icons.access_time, '${recipe.cookingTime} phút'),
                         const SizedBox(width: 16),
-                        _buildInfoChip(
-                          Icons.people,
-                          '${recipe.servings} người',
-                        ),
+                        _buildInfoChip(Icons.people, '${recipe.servings} người'),
                         const SizedBox(width: 16),
                         _buildInfoChip(
                           Icons.signal_cellular_alt,
@@ -634,19 +654,35 @@ class _RecipeScreenState extends State<RecipeScreen>
     );
   }
 
+
   Widget _buildInfoChip(IconData icon, String text) {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final color = isDarkMode ? Colors.grey[300] : Colors.grey[600];
+
     return Row(
       children: [
-        Icon(icon, size: 16, color: Colors.grey[600]),
+        Icon(icon, size: 16, color: color),
         const SizedBox(width: 4),
-        Text(text, style: TextStyle(color: Colors.grey[600], fontSize: 12)),
+        Text(
+          text,
+          style: TextStyle(color: color, fontSize: 12),
+        ),
       ],
     );
   }
 
+
   Widget _buildFavoritesList() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkMode ? Colors.grey[200] : Colors.black87;
+
     if (_currentUser == null) {
-      return const Center(child: Text('Vui lòng đăng nhập để xem yêu thích'));
+      return Center(
+        child: Text(
+          'Vui lòng đăng nhập để xem yêu thích',
+          style: TextStyle(color: textColor),
+        ),
+      );
     }
 
     return StreamBuilder<List<Recipe>>(
@@ -670,6 +706,7 @@ class _RecipeScreenState extends State<RecipeScreen>
       },
     );
   }
+
 
   Widget _buildCategoriesGrid() {
     return GridView.builder(
