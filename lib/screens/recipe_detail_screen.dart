@@ -143,39 +143,46 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   }
 
   Widget _buildSliverAppBar() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return SliverAppBar(
       expandedHeight: 300,
       pinned: true,
-      backgroundColor: const Color(0xFFFF6B6B),
+      backgroundColor: isDarkMode ? Colors.grey[900] : const Color(0xFFFF6B6B),
       leading: Container(
         margin: const EdgeInsets.all(8),
         decoration: BoxDecoration(
-          color: Colors.white.withOpacity(0.9),
+          color: isDarkMode ? Colors.grey[850] : Colors.white.withOpacity(0.9),
           shape: BoxShape.circle,
         ),
         child: IconButton(
-          icon: const Icon(Icons.arrow_back, color: Color(0xFFFF6B6B)),
+          icon: Icon(
+            Icons.arrow_back,
+            color: isDarkMode ? Colors.white : const Color(0xFFFF6B6B),
+          ),
           onPressed: () => Navigator.pop(context),
         ),
       ),
       actions: [
-        if (_currentUser?.id == widget.recipe.createdBy ||
-            _currentUser?.isAdmin == true) ...[
+        if (_currentUser?.id == widget.recipe.createdBy || _currentUser?.isAdmin == true) ...[
           Container(
             margin: const EdgeInsets.all(8),
             decoration: BoxDecoration(
-              color: Colors.white.withOpacity(0.9),
+              color: isDarkMode ? Colors.grey[850] : Colors.white.withOpacity(0.9),
               shape: BoxShape.circle,
             ),
             child: PopupMenuButton(
-              icon: const Icon(Icons.more_vert, color: Color(0xFFFF6B6B)),
+              icon: Icon(
+                Icons.more_vert,
+                color: isDarkMode ? Colors.white : const Color(0xFFFF6B6B),
+              ),
               itemBuilder: (context) => [
                 PopupMenuItem(
-                  child: const Row(
+                  child: Row(
                     children: [
-                      Icon(Icons.edit, color: Color(0xFFFF6B6B)),
-                      SizedBox(width: 8),
-                      Text('Chỉnh sửa'),
+                      Icon(Icons.edit, color: isDarkMode ? Colors.white : const Color(0xFFFF6B6B)),
+                      const SizedBox(width: 8),
+                      Text('Chỉnh sửa', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
                     ],
                   ),
                   onTap: () {
@@ -183,16 +190,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       Navigator.push(
                         context,
                         MaterialPageRoute(
-                          builder: (context) =>
-                              AddRecipeScreen(recipe: widget.recipe),
+                          builder: (context) => AddRecipeScreen(recipe: widget.recipe),
                         ),
                       );
                     });
                   },
                 ),
                 PopupMenuItem(
-                  child: const Row(
-                    children: [
+                  child: Row(
+                    children: const [
                       Icon(Icons.delete, color: Colors.red),
                       SizedBox(width: 8),
                       Text('Xóa', style: TextStyle(color: Colors.red)),
@@ -213,23 +219,28 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           children: [
             widget.recipe.imageUrl.isNotEmpty
                 ? HybridImageWidget(
-                    imageUrl: widget.recipe.imageUrl,
-                    fit: BoxFit.cover,
-                  )
+              imageUrl: widget.recipe.imageUrl,
+              fit: BoxFit.cover,
+            )
                 : Container(
-                    color: Colors.grey[300],
-                    child: const Icon(
-                      Icons.restaurant,
-                      size: 100,
-                      color: Colors.grey,
-                    ),
-                  ),
+              color: Colors.grey[300],
+              child: const Icon(
+                Icons.restaurant,
+                size: 100,
+                color: Colors.grey,
+              ),
+            ),
             Container(
               decoration: BoxDecoration(
                 gradient: LinearGradient(
                   begin: Alignment.topCenter,
                   end: Alignment.bottomCenter,
-                  colors: [Colors.transparent, Colors.black.withOpacity(0.7)],
+                  colors: [
+                    Colors.transparent,
+                    isDarkMode
+                        ? Colors.black.withOpacity(0.8)
+                        : Colors.black.withOpacity(0.7),
+                  ],
                 ),
               ),
             ),
@@ -239,7 +250,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
+
   Widget _buildRecipeHeader() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       padding: const EdgeInsets.all(20),
       child: Column(
@@ -248,10 +262,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           Row(
             children: [
               Container(
-                padding: const EdgeInsets.symmetric(
-                  horizontal: 12,
-                  vertical: 6,
-                ),
+                padding: const EdgeInsets.symmetric(horizontal: 12, vertical: 6),
                 decoration: BoxDecoration(
                   color: const Color(0xFFFF6B6B).withOpacity(0.1),
                   borderRadius: BorderRadius.circular(20),
@@ -272,14 +283,18 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   const SizedBox(width: 4),
                   Text(
                     widget.recipe.rating.toStringAsFixed(1),
-                    style: const TextStyle(
+                    style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
+                      color: isDarkMode ? Colors.white : Colors.black,
                     ),
                   ),
                   Text(
                     ' (${widget.recipe.ratingCount})',
-                    style: TextStyle(fontSize: 14, color: Colors.grey[600]),
+                    style: TextStyle(
+                      fontSize: 14,
+                      color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+                    ),
                   ),
                 ],
               ),
@@ -288,10 +303,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           const SizedBox(height: 16),
           Text(
             widget.recipe.title,
-            style: const TextStyle(
+            style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
-              color: Color(0xFF2D3748),
+              color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
             ),
           ),
           const SizedBox(height: 12),
@@ -299,7 +314,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             widget.recipe.description,
             style: TextStyle(
               fontSize: 16,
-              color: Colors.grey[700],
+              color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
               height: 1.5,
             ),
           ),
@@ -308,12 +323,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
+
   Widget _buildRecipeInfo() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Container(
       margin: const EdgeInsets.symmetric(horizontal: 20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: isDarkMode ? Colors.grey[850] : Colors.white,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
           BoxShadow(
@@ -327,18 +345,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildInfoItem(
-            Icons.access_time,
-            '${widget.recipe.cookingTime} phút',
-            'Thời gian',
-          ),
-          _buildDivider(),
-          _buildInfoItem(
-            Icons.people,
-            '${widget.recipe.servings} người',
-            'Khẩu phần',
-          ),
-          _buildDivider(),
+          _buildInfoItem(Icons.access_time, '${widget.recipe.cookingTime} phút', 'Thời gian', isDarkMode),
+          _buildDivider(isDarkMode),
+          _buildInfoItem(Icons.people, '${widget.recipe.servings} người', 'Khẩu phần', isDarkMode),
+          _buildDivider(isDarkMode),
           _buildInfoItem(
             Icons.signal_cellular_alt,
             widget.recipe.difficulty == 'easy'
@@ -347,48 +357,68 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ? 'Trung bình'
                 : 'Khó',
             'Độ khó',
+            isDarkMode,
           ),
         ],
       ),
     );
   }
 
-  Widget _buildInfoItem(IconData icon, String value, String label) {
+
+
+  Widget _buildInfoItem(IconData icon, String value, String label, bool isDarkMode) {
     return Column(
       children: [
         Icon(icon, color: const Color(0xFFFF6B6B), size: 24),
         const SizedBox(height: 8),
         Text(
           value,
-          style: const TextStyle(
+          style: TextStyle(
             fontSize: 16,
             fontWeight: FontWeight.bold,
-            color: Color(0xFF2D3748),
+            color: isDarkMode ? Colors.white : const Color(0xFF2D3748),
           ),
         ),
-        Text(label, style: TextStyle(fontSize: 12, color: Colors.grey[600])),
+        Text(
+          label,
+          style: TextStyle(
+            fontSize: 12,
+            color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
+          ),
+        ),
       ],
     );
   }
 
-  Widget _buildDivider() {
-    return Container(height: 40, width: 1, color: Colors.grey[300]);
+
+  Widget _buildDivider(bool isDarkMode) {
+    return Container(
+      height: 40,
+      width: 1,
+      color: isDarkMode ? Colors.grey[700] : Colors.grey[300],
+    );
   }
 
+
+
   Widget _buildIngredients() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF2D3748);
+
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
+          if (!isDarkMode)
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
         ],
       ),
       child: Column(
@@ -409,19 +439,19 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Nguyên liệu',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D3748),
+                  color: textColor,
                 ),
               ),
             ],
           ),
           const SizedBox(height: 16),
           ...widget.recipe.ingredients.map(
-            (ingredient) => Padding(
+                (ingredient) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Row(
                 children: [
@@ -437,9 +467,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   Expanded(
                     child: Text(
                       ingredient,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
-                        color: Color(0xFF2D3748),
+                        color: textColor,
                         height: 1.5,
                       ),
                     ),
@@ -453,20 +483,25 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
+
   Widget _buildInstructions() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final textColor = isDarkMode ? Colors.white : const Color(0xFF2D3748);
+
     return Container(
       margin: const EdgeInsets.all(20),
       padding: const EdgeInsets.all(20),
       decoration: BoxDecoration(
-        color: Colors.white,
+        color: Theme.of(context).cardColor,
         borderRadius: BorderRadius.circular(20),
         boxShadow: [
-          BoxShadow(
-            color: Colors.grey.withOpacity(0.1),
-            spreadRadius: 1,
-            blurRadius: 10,
-            offset: const Offset(0, 3),
-          ),
+          if (!isDarkMode)
+            BoxShadow(
+              color: Colors.grey.withOpacity(0.1),
+              spreadRadius: 1,
+              blurRadius: 10,
+              offset: const Offset(0, 3),
+            ),
         ],
       ),
       child: Column(
@@ -487,12 +522,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                 ),
               ),
               const SizedBox(width: 12),
-              const Text(
+              Text(
                 'Cách làm',
                 style: TextStyle(
                   fontSize: 20,
                   fontWeight: FontWeight.bold,
-                  color: Color(0xFF2D3748),
+                  color: textColor,
                 ),
               ),
             ],
@@ -529,9 +564,9 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   Expanded(
                     child: Text(
                       instruction,
-                      style: const TextStyle(
+                      style: TextStyle(
                         fontSize: 16,
-                        color: Color(0xFF2D3748),
+                        color: textColor,
                         height: 1.6,
                       ),
                     ),
@@ -545,33 +580,43 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
     );
   }
 
+
   Widget _buildFloatingActionButtons() {
+    final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+
     return Column(
       mainAxisSize: MainAxisSize.min,
       children: [
         FloatingActionButton(
           heroTag: "favorite",
           onPressed: _isLoading ? null : _toggleFavorite,
-          backgroundColor: _isFavorite ? const Color(0xFFFF6B6B) : Colors.white,
+          backgroundColor: _isFavorite
+              ? const Color(0xFFFF6B6B)
+              : (isDarkMode ? Colors.grey[800] : Colors.white),
           child: _isLoading
               ? const SizedBox(
-                  width: 20,
-                  height: 20,
-                  child: CircularProgressIndicator(strokeWidth: 2),
-                )
+            width: 20,
+            height: 20,
+            child: CircularProgressIndicator(
+              strokeWidth: 2,
+              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B6B)),
+            ),
+          )
               : Icon(
-                  _isFavorite ? Icons.favorite : Icons.favorite_border,
-                  color: _isFavorite ? Colors.white : const Color(0xFFFF6B6B),
-                ),
+            _isFavorite ? Icons.favorite : Icons.favorite_border,
+            color: _isFavorite
+                ? Colors.white
+                : const Color(0xFFFF6B6B),
+          ),
         ),
         const SizedBox(height: 16),
         FloatingActionButton.extended(
           heroTag: "share",
           onPressed: () {
-            // Implement share functionality
             ScaffoldMessenger.of(context).showSnackBar(
-              const SnackBar(
-                content: Text('Tính năng chia sẻ sẽ có trong phiên bản sau'),
+              SnackBar(
+                content: const Text('Tính năng chia sẻ sẽ có trong phiên bản sau'),
+                backgroundColor: isDarkMode ? Colors.grey[800] : Colors.black87,
               ),
             );
           },
@@ -585,4 +630,5 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       ],
     );
   }
+
 }
