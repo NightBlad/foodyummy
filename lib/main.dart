@@ -3,8 +3,6 @@ import 'package:firebase_core/firebase_core.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
-
-import 'firebase_options.dart'; // 🔹 THÊM DÒNG NÀY
 import 'utils/utf8_config.dart';
 import 'screens/login_screen.dart';
 import 'screens/menu_screen.dart';
@@ -53,19 +51,14 @@ class AppSettings extends ChangeNotifier {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+  await Firebase.initializeApp();
 
-  // 🔹 SỬ DỤNG file firebase_options.dart thay vì tự viết tay
-  await Firebase.initializeApp(
-    options: DefaultFirebaseOptions.currentPlatform,
-  );
-
+  // Cấu hình UTF-8 cho Firestore
   UTF8Config.configureFirestore();
 
+
   runApp(
-    ChangeNotifierProvider(
-      create: (_) => AppSettings(),
-      child: const MyApp(),
-    ),
+    ChangeNotifierProvider(create: (_) => AppSettings(), child: const MyApp()),
   );
 }
 
@@ -75,13 +68,11 @@ class MyApp extends StatelessWidget {
   @override
   Widget build(BuildContext context) {
     final appSettings = Provider.of<AppSettings>(context);
-
     return MaterialApp(
       title: 'FoodyYummy - Ứng dụng nấu ăn',
       debugShowCheckedModeBanner: false,
       theme: ThemeData(
-        brightness:
-        appSettings.isDarkMode ? Brightness.dark : Brightness.light,
+        brightness: appSettings.isDarkMode ? Brightness.dark : Brightness.light,
         primarySwatch: Colors.red,
         primaryColor: const Color(0xFFFF6B6B),
         fontFamily: 'Roboto',
@@ -90,7 +81,7 @@ class MyApp extends StatelessWidget {
           backgroundColor: appSettings.isDarkMode
               ? Colors.grey[900]
               : const Color(0xFFFF6B6B),
-          foregroundColor: Colors.white,
+          foregroundColor: appSettings.isDarkMode ? Colors.white : Colors.white,
           elevation: 0,
         ),
         scaffoldBackgroundColor: appSettings.isDarkMode
@@ -99,15 +90,17 @@ class MyApp extends StatelessWidget {
         cardColor: appSettings.isDarkMode ? Colors.grey[850] : Colors.white,
         canvasColor: appSettings.isDarkMode ? Colors.grey[900] : Colors.white,
         dialogTheme: DialogThemeData(
-          backgroundColor:
-          appSettings.isDarkMode ? Colors.grey[850] : Colors.white,
+          backgroundColor: appSettings.isDarkMode
+              ? Colors.grey[850]
+              : Colors.white,
         ),
         tabBarTheme: TabBarThemeData(
           labelColor: appSettings.isDarkMode
               ? Colors.red[200]
               : const Color(0xFFFF6B6B),
-          unselectedLabelColor:
-          appSettings.isDarkMode ? Colors.grey[400] : Colors.grey,
+          unselectedLabelColor: appSettings.isDarkMode
+              ? Colors.grey[400]
+              : Colors.grey,
         ),
         splashFactory: NoSplash.splashFactory,
         highlightColor: Colors.transparent,
@@ -119,8 +112,7 @@ class MyApp extends StatelessWidget {
             return const Scaffold(
               body: Center(
                 child: CircularProgressIndicator(
-                  valueColor:
-                  AlwaysStoppedAnimation<Color>(Color(0xFFFF6B6B)),
+                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B6B)),
                 ),
               ),
             );
@@ -139,6 +131,64 @@ class MyApp extends StatelessWidget {
         '/admin-statistics': (context) => const AdminStatisticsScreen(),
         '/admin-settings': (context) => const AdminSettingsScreen(),
       },
+    );
+  }
+}
+
+class CustomZoomPageTransitionsBuilder extends PageTransitionsBuilder {
+  final Duration duration;
+  const CustomZoomPageTransitionsBuilder({
+    this.duration = const Duration(milliseconds: 1000),
+  });
+
+  @override
+  Widget buildTransitions<T>(
+      PageRoute<T> route,
+      BuildContext context,
+      Animation<double> animation,
+      Animation<double> secondaryAnimation,
+      Widget child,
+      ) {
+    return ZoomPageTransition(
+      animation: animation,
+      secondaryAnimation: secondaryAnimation,
+      child: child,
+      duration: duration,
+    );
+  }
+}
+
+class ZoomPageTransition extends StatelessWidget {
+  final Animation<double> animation;
+  final Animation<double> secondaryAnimation;
+  final Widget child;
+  final Duration duration;
+
+  const ZoomPageTransition({
+    Key? key,
+    required this.animation,
+    required this.secondaryAnimation,
+    required this.child,
+    required this.duration,
+  }) : super(key: key);
+
+  @override
+  Widget build(BuildContext context) {
+    final curvedAnimation = CurvedAnimation(
+      parent: animation,
+      curve: Curves.fastOutSlowIn,
+      reverseCurve: Curves.fastOutSlowIn,
+    );
+    return AnimatedBuilder(
+      animation: curvedAnimation,
+      builder: (context, child) {
+        final double scale = 0.95 + (curvedAnimation.value * 0.05);
+        return Transform.scale(
+          scale: scale,
+          child: Opacity(opacity: curvedAnimation.value, child: child),
+        );
+      },
+      child: child,
     );
   }
 }
