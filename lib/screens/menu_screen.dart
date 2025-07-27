@@ -399,50 +399,53 @@ class _RecipeScreenState extends State<RecipeScreen>
   }
 
   Widget _buildRecipeList() {
-    return StreamBuilder<List<Recipe>>(
-      key: ValueKey(
-        '${_searchQuery}_${_selectedCategory}',
-      ), // Key để force rebuild khi filter thay đổi
-      stream: _searchQuery.isNotEmpty
-          ? _firestoreService.searchRecipes(_searchQuery)
-          : _selectedCategory == 'Tất cả'
-          ? _firestoreService.getRecipes()
-          : _firestoreService.getRecipesByCategory(_selectedCategory),
-      builder: (context, snapshot) {
-        if (snapshot.connectionState == ConnectionState.waiting) {
-          return const Center(
-            child: CircularProgressIndicator(
-              valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B6B)),
-            ),
-          );
-        }
-
-        if (!snapshot.hasData || snapshot.data!.isEmpty) {
-          String message = 'Không có công thức nào';
-          if (_searchQuery.isNotEmpty) {
-            message = 'Không tìm thấy công thức cho "$_searchQuery"';
-          } else if (_selectedCategory != 'Tất cả') {
-            message =
-                'Chưa có công thức nào trong danh mục "$_selectedCategory"';
-          }
-          return _buildEmptyState(message: message);
-        }
-
-        return Column(
-          children: [
-            _buildCategoryFilter(),
-            Expanded(
-              child: ListView.builder(
-                padding: const EdgeInsets.all(20),
-                itemCount: snapshot.data!.length,
-                itemBuilder: (context, index) {
-                  return _buildRecipeCard(snapshot.data![index]);
+    return Column(
+      children: [
+        _buildCategoryFilter(),
+        Expanded(
+          child: StreamBuilder<List<Recipe>>(
+            key: ValueKey('${_searchQuery}_${_selectedCategory}'),
+            stream: _searchQuery.isNotEmpty
+                ? _firestoreService.searchRecipes(_searchQuery)
+                : _selectedCategory == 'Tất cả'
+                ? _firestoreService.getRecipes()
+                : _firestoreService.getRecipesByCategory(_selectedCategory),
+            builder: (context, snapshot) {
+              if (snapshot.connectionState == ConnectionState.waiting) {
+                return const Center(
+                  child: CircularProgressIndicator(
+                    valueColor: AlwaysStoppedAnimation<Color>(
+                      Color(0xFFFF6B6B),
+                    ),
+                  ),
+                );
+              }
+              if (!snapshot.hasData || snapshot.data!.isEmpty) {
+                String message = 'Không có công thức nào';
+                if (_searchQuery.isNotEmpty) {
+                  message = 'Không tìm thấy công thức cho "$_searchQuery"';
+                } else if (_selectedCategory != 'Tất cả') {
+                  message =
+                      'Chưa có công thức nào trong danh mục "$_selectedCategory"';
+                }
+                return _buildEmptyState(message: message);
+              }
+              return RefreshIndicator(
+                onRefresh: () async {
+                  setState(() {});
                 },
-              ),
-            ),
-          ],
-        );
-      },
+                child: ListView.builder(
+                  padding: const EdgeInsets.all(20),
+                  itemCount: snapshot.data!.length,
+                  itemBuilder: (context, index) {
+                    return _buildRecipeCard(snapshot.data![index]);
+                  },
+                ),
+              );
+            },
+          ),
+        ),
+      ],
     );
   }
 
