@@ -3,7 +3,8 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
 import '../models/user.dart';
 import '../services/firestore_service.dart';
-import 'add_recipe_screen.dart';
+import 'add_recipes_screen.dart';
+import '../widgets/hybrid_image_widget.dart';
 
 class RecipeDetailScreen extends StatefulWidget {
   final Recipe recipe;
@@ -212,16 +213,8 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           children: [
             widget.recipe.imageUrl.isNotEmpty
                 ? HybridImageWidget(
-                    imagePath: widget.recipe.imageUrl,
+                    imageUrl: widget.recipe.imageUrl,
                     fit: BoxFit.cover,
-                    errorWidget: Container(
-                      color: Colors.grey[300],
-                      child: const Icon(
-                        Icons.restaurant,
-                        size: 100,
-                        color: Colors.grey,
-                      ),
-                    ),
                   )
                 : Container(
                     color: Colors.grey[300],

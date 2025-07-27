@@ -4,10 +4,11 @@ import '../models/recipe.dart';
 import '../models/user.dart';
 import '../services/firestore_service.dart';
 import 'recipe_detail_screen.dart';
-import 'add_recipe_screen.dart';
+import 'add_recipes_screen.dart';
 import 'admin_panel_screen.dart';
 import 'settings_screen.dart';
 import 'help_screen.dart';
+import '../widgets/hybrid_image_widget.dart';
 
 class RecipeScreen extends StatefulWidget {
   const RecipeScreen({super.key});
@@ -482,18 +483,10 @@ class _RecipeScreenState extends State<RecipeScreen>
                     ? Stack(
                         children: [
                           HybridImageWidget(
-                            imagePath: recipe.imageUrl,
+                            imageUrl: recipe.imageUrl,
                             width: double.infinity,
                             height: 200,
                             fit: BoxFit.cover,
-                            errorWidget: Container(
-                              color: Colors.grey[200],
-                              child: const Icon(
-                                Icons.restaurant,
-                                size: 50,
-                                color: Colors.grey,
-                              ),
-                            ),
                           ),
                           Positioned(
                             top: 10,
@@ -969,3 +962,5 @@ class _RecipeScreenState extends State<RecipeScreen>
     );
   }
 }
+
+// TODO: Replace deprecated .withOpacity() usages with .withValues() for Color objects throughout this file.

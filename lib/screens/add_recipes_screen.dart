@@ -464,7 +464,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
                 )
               : _currentImageUrl != null && _currentImageUrl!.isNotEmpty
               ? HybridImageWidget(
-                  imagePath: _currentImageUrl!,
+                  imageUrl: _currentImageUrl!,
                   fit: BoxFit.cover,
                   width: double.infinity,
                   height: 150,

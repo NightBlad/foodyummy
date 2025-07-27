@@ -3,11 +3,18 @@ import 'package:dio/dio.dart';
 import 'package:cloudinary_public/cloudinary_public.dart';
 
 class CloudinaryService {
-  final cloudinary = CloudinaryPublic('dkjxd1qdx', 'nguyenhakien', cache: false);
+  final cloudinary = CloudinaryPublic(
+    'dkjxd1qdx',
+    'nguyenhakien',
+    cache: false,
+  );
 
   Future<String> uploadImage(File imageFile) async {
     final response = await cloudinary.uploadFile(
-      CloudinaryFile.fromFile(imageFile.path, resourceType: CloudinaryResourceType.Image),
+      CloudinaryFile.fromFile(
+        imageFile.path,
+        resourceType: CloudinaryResourceType.Image,
+      ),
     );
     return response.secureUrl;
   }
