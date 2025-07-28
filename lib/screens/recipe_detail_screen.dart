@@ -21,10 +21,12 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
   AppUser? _currentUser;
   bool _isFavorite = false;
   bool _isLoading = false;
+  late Recipe _currentRecipe; // Thêm biến để lưu recipe hiện tại
 
   @override
   void initState() {
     super.initState();
+    _currentRecipe = widget.recipe; // Khởi tạo với recipe từ widget
     _loadCurrentUser();
   }
 
@@ -186,15 +188,30 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                       Text('Chỉnh sửa', style: TextStyle(color: isDarkMode ? Colors.white : Colors.black)),
                     ],
                   ),
-                  onTap: () {
-                    Future.delayed(Duration.zero, () {
-                      Navigator.push(
-                        context,
-                        MaterialPageRoute(
-                          builder: (context) => AddRecipeScreen(recipe: widget.recipe),
+                  onTap: () async {
+                    // Navigate to edit screen and wait for result
+                    final result = await Navigator.push(
+                      context,
+                      MaterialPageRoute(
+                        builder: (context) => AddRecipeScreen(recipe: _currentRecipe),
+                      ),
+                    );
+
+                    // If recipe was updated, reload the screen
+                    if (result != null && result is Recipe) {
+                      setState(() {
+                        // Update the current recipe with new data
+                        _currentRecipe = result;
+                      });
+
+                      // Show success message
+                      ScaffoldMessenger.of(context).showSnackBar(
+                        const SnackBar(
+                          content: Text('Công thức đã được cập nhật!'),
+                          backgroundColor: Colors.green,
                         ),
                       );
-                    });
+                    }
                   },
                 ),
                 PopupMenuItem(
@@ -219,10 +236,10 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           fit: StackFit.expand,
           children: [
             // Sử dụng ImageGalleryWidget để hiển thị tất cả ảnh
-            widget.recipe.images.isNotEmpty
+            _currentRecipe.images.isNotEmpty
                 ? ClipRect(
                     child: ImageGalleryWidget(
-                      imageUrls: widget.recipe.images,
+                      imageUrls: _currentRecipe.images,
                       isEditable: false, // Không cho phép xóa ảnh khi xem chi tiết
                     ),
                   )
@@ -279,7 +296,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   borderRadius: BorderRadius.circular(20),
                 ),
                 child: Text(
-                  widget.recipe.category,
+                  _currentRecipe.category,
                   style: const TextStyle(
                     color: Color(0xFFFF6B6B),
                     fontWeight: FontWeight.w600,
@@ -293,7 +310,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                   const Icon(Icons.star, color: Colors.amber, size: 20),
                   const SizedBox(width: 4),
                   Text(
-                    widget.recipe.rating.toStringAsFixed(1),
+                    _currentRecipe.rating.toStringAsFixed(1),
                     style: TextStyle(
                       fontSize: 16,
                       fontWeight: FontWeight.w600,
@@ -301,7 +318,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
                     ),
                   ),
                   Text(
-                    ' (${widget.recipe.ratingCount})',
+                    ' (${_currentRecipe.ratingCount})',
                     style: TextStyle(
                       fontSize: 14,
                       color: isDarkMode ? Colors.grey[400] : Colors.grey[600],
@@ -313,7 +330,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           ),
           const SizedBox(height: 16),
           Text(
-            widget.recipe.title,
+            _currentRecipe.title,
             style: TextStyle(
               fontSize: 28,
               fontWeight: FontWeight.bold,
@@ -322,7 +339,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
           ),
           const SizedBox(height: 12),
           Text(
-            widget.recipe.description,
+            _currentRecipe.description,
             style: TextStyle(
               fontSize: 16,
               color: isDarkMode ? Colors.grey[300] : Colors.grey[700],
@@ -356,15 +373,15 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
       child: Row(
         mainAxisAlignment: MainAxisAlignment.spaceEvenly,
         children: [
-          _buildInfoItem(Icons.access_time, '${widget.recipe.cookingTime} phút', 'Thời gian', isDarkMode),
+          _buildInfoItem(Icons.access_time, '${_currentRecipe.cookingTime} phút', 'Thời gian', isDarkMode),
           _buildDivider(isDarkMode),
-          _buildInfoItem(Icons.people, '${widget.recipe.servings} người', 'Khẩu phần', isDarkMode),
+          _buildInfoItem(Icons.people, '${_currentRecipe.servings} người', 'Khẩu phần', isDarkMode),
           _buildDivider(isDarkMode),
           _buildInfoItem(
             Icons.signal_cellular_alt,
-            widget.recipe.difficulty == 'easy'
+            _currentRecipe.difficulty == 'easy'
                 ? 'Dễ'
-                : widget.recipe.difficulty == 'medium'
+                : _currentRecipe.difficulty == 'medium'
                 ? 'Trung bình'
                 : 'Khó',
             'Độ khó',
@@ -461,7 +478,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          ...widget.recipe.ingredients.map(
+          ..._currentRecipe.ingredients.map(
                 (ingredient) => Padding(
               padding: const EdgeInsets.only(bottom: 12),
               child: Row(
@@ -544,7 +561,7 @@ class _RecipeDetailScreenState extends State<RecipeDetailScreen> {
             ],
           ),
           const SizedBox(height: 16),
-          ...widget.recipe.instructions.asMap().entries.map((entry) {
+          ..._currentRecipe.instructions.asMap().entries.map((entry) {
             final index = entry.key;
             final instruction = entry.value;
 

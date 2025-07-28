@@ -5,6 +5,7 @@ import 'package:image_picker/image_picker.dart';
 import '../models/recipe.dart';
 import '../services/firestore_service.dart';
 import '../services/cloudinary_service.dart';
+import '../services/notification_service.dart'; // Thêm import này
 import '../widgets/hybrid_image_widget.dart';
 import '../widgets/image_gallery_widget.dart';
 
@@ -226,7 +227,21 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
       );
 
       if (widget.recipe == null) {
-        await _firestoreService.addRecipe(recipe);
+        // Thêm mới
+        final addedRecipe = await _firestoreService.addRecipe(recipe);
+
+        // Gửi notification cho tất cả users về công thức mới
+        if (addedRecipe != null) {
+          final currentUser = await _firestoreService.getUser(user.uid);
+          final authorName = currentUser?.name ?? 'Người dùng';
+
+          await NotificationService().triggerNewRecipeNotification(
+            recipeId: addedRecipe, // addedRecipe đã là String ID, không cần .id
+            recipeTitle: recipe.title,
+            authorName: authorName,
+          );
+        }
+
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
             const SnackBar(
@@ -237,6 +252,7 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
           Navigator.pop(context, true);
         }
       } else {
+        // Cập nhật
         await _firestoreService.updateRecipe(recipe);
         if (mounted) {
           ScaffoldMessenger.of(context).showSnackBar(
@@ -245,7 +261,8 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
               backgroundColor: Colors.green,
             ),
           );
-          Navigator.pop(context, true);
+          // Trả về recipe đã update để recipe_detail_screen có thể reload
+          Navigator.pop(context, recipe);
         }
       }
     } catch (e) {

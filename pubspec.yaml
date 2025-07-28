@@ -40,6 +40,7 @@ dependencies:
   firebase_auth: ^4.17.0
   firebase_messaging: ^14.7.10
   firebase_storage: ^11.6.0
+  flutter_local_notifications: ^17.2.2
   http: ^1.2.1
   shared_preferences: ^2.5.3
   image_picker: ^1.0.7
@@ -47,6 +48,8 @@ dependencies:
   path_provider: ^2.1.2
   dio: ^5.8.0+1
   cloudinary_public: ^0.23.1
+  dart_jsonwebtoken: ^3.2.0
+
 
 dev_dependencies:
   flutter_test:

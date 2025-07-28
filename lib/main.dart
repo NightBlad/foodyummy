@@ -1,16 +1,27 @@
 import 'package:flutter/material.dart';
 import 'package:firebase_core/firebase_core.dart';
+import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:firebase_auth/firebase_auth.dart';
 import 'package:provider/provider.dart';
 import 'package:shared_preferences/shared_preferences.dart';
 import 'utils/utf8_config.dart';
 import 'screens/login_screen.dart';
 import 'screens/menu_screen.dart';
+import 'screens/app_initializer.dart'; // Thêm import này
 import 'screens/user_management_screen.dart';
 import 'screens/recipe_management_screen.dart';
 import 'screens/ingredient_management_screen.dart';
 import 'screens/admin_statistics_screen.dart';
 import 'screens/admin_settings_screen.dart';
+import 'services/notification_service.dart'; // Thêm import này
+
+// Hàm xử lý thông báo khi app ở background
+Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
+  await Firebase.initializeApp();
+  print('Handling a background message: ${message.messageId}');
+  print('Title: ${message.notification?.title}');
+  print('Body: ${message.notification?.body}');
+}
 
 class AppSettings extends ChangeNotifier {
   bool _isDarkMode = false;
@@ -52,6 +63,12 @@ class AppSettings extends ChangeNotifier {
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
   await Firebase.initializeApp();
+
+  // Đăng ký handler cho background messages
+  FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
+
+  // Khởi tạo Notification Service
+  await NotificationService().initialize();
 
   // Cấu hình UTF-8 cho Firestore
   UTF8Config.configureFirestore();
@@ -118,9 +135,9 @@ class MyApp extends StatelessWidget {
             );
           }
           if (snapshot.hasData) {
-            return RecipeScreen();
+            return const AppInitializer(); // Thay đổi từ RecipeScreen() sang AppInitializer()
           }
-          return LoginScreen();
+          return const LoginScreen();
         },
       ),
       routes: {
