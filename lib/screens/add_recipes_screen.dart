@@ -5,7 +5,8 @@ import 'package:image_picker/image_picker.dart';
 import '../models/recipe.dart';
 import '../services/firestore_service.dart';
 import '../services/cloudinary_service.dart';
-import '../services/notification_service.dart'; // Thêm import này
+import '../services/notification_service.dart';
+import '../services/auto_notification_service.dart'; // Thêm import này
 import '../widgets/hybrid_image_widget.dart';
 import '../widgets/image_gallery_widget.dart';
 
@@ -230,11 +231,19 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         // Thêm mới
         final addedRecipe = await _firestoreService.addRecipe(recipe);
 
-        // Gửi notification cho tất cả users về công thức mới
         if (addedRecipe != null) {
-          await NotificationService().triggerNewRecipeNotification(
-            recipeId: addedRecipe, // addedRecipe đã là String ID, không cần .id
+          // Gửi local notification ngay lập tức cho user hiện tại
+          await NotificationService().showSimpleLocalNotification(
+            title: "🍽️ Món mới đã thêm thành công!",
+            body: "\"${recipe.title}\" đã được thêm vào bộ sưu tập của bạn",
+            recipeId: addedRecipe,
+          );
+
+          // Tạo notification trigger để gửi cho tất cả users (hoạt động cả khi app tắt)
+          await AutoNotificationService().createNotificationTrigger(
+            recipeId: addedRecipe,
             recipeTitle: recipe.title,
+            authorId: user.uid,
             category: recipe.category,
           );
         }

@@ -102,12 +102,12 @@ class FirestoreService {
       );
 
       // Gửi thông báo tự động cho tất cả users
-      await _autoNotificationService.sendNewRecipeNotification(recipeWithId);
-
-      // Gửi thông báo theo category nếu có
-      if (recipe.category.isNotEmpty) {
-        await _autoNotificationService.sendCategoryNotification(recipe.category, recipeWithId);
-      }
+      await _autoNotificationService.createNotificationTrigger(
+        recipeId: docRef.id,
+        recipeTitle: recipe.title,
+        authorId: recipe.createdBy,
+        category: recipe.category,
+      );
 
       return docRef.id;
     } catch (e) {

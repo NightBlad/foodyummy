@@ -15,6 +15,7 @@ import 'screens/admin_statistics_screen.dart';
 import 'screens/admin_settings_screen.dart';
 import 'services/notification_service.dart';
 import 'services/notification_handler.dart';
+import 'services/auto_notification_service.dart';
 
 // Hàm xử lý thông báo khi app ở background
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -98,6 +99,11 @@ class _FoodYummyAppState extends State<FoodYummyApp> {
   Future<void> _setupNotifications() async {
     // Initialize notification service
     await NotificationService().initialize();
+
+    // Initialize auto notification service
+    final autoNotificationService = AutoNotificationService();
+    await autoNotificationService.ensureTopicSubscription();
+    autoNotificationService.startListening();
 
     // Handle notification khi app được mở từ terminated state
     await NotificationHandler.handleInitialMessage();
