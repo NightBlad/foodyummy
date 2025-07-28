@@ -232,20 +232,15 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
         final addedRecipe = await _firestoreService.addRecipe(recipe);
 
         if (addedRecipe != null) {
-          // Gửi local notification ngay lập tức cho user hiện tại
+          // Chỉ gửi local notification cho user hiện tại
           await NotificationService().showSimpleLocalNotification(
             title: "🍽️ Món mới đã thêm thành công!",
             body: "\"${recipe.title}\" đã được thêm vào bộ sưu tập của bạn",
             recipeId: addedRecipe,
           );
 
-          // Tạo notification trigger để gửi cho tất cả users (hoạt động cả khi app tắt)
-          await AutoNotificationService().createNotificationTrigger(
-            recipeId: addedRecipe,
-            recipeTitle: recipe.title,
-            authorId: user.uid,
-            category: recipe.category,
-          );
+          // Không tạo trigger ở đây nữa vì đã có trong FirestoreService
+          // Trigger sẽ tự động gửi thông báo cho tất cả users khác
         }
 
         if (mounted) {

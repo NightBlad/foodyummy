@@ -59,7 +59,8 @@ class AutoNotificationService {
     Map<String, dynamic>? data,
   }) async {
     try {
-      const String serverKey = 'AAAA8yZhb9g:APA91bHm5xQYzGVXfwP6H4nPKwJsJ8OULzJ9MZQfGvZqLyH3xN1rYJ9Q2fL4sR7tPq'; // Legacy server key
+      // Sử dụng legacy server key thực từ Firebase Console
+      const String serverKey = 'AAAAYourServerKey'; // Cần thay bằng server key thực từ Firebase
 
       final response = await http.post(
         Uri.parse('https://fcm.googleapis.com/fcm/send'),
@@ -74,29 +75,50 @@ class AutoNotificationService {
             'body': body,
             'sound': 'default',
             'badge': '1',
+            'click_action': 'FLUTTER_NOTIFICATION_CLICK',
           },
           'data': data ?? {},
           'priority': 'high',
           'content_available': true,
+          'android': {
+            'notification': {
+              'channel_id': 'foodyummy_channel',
+              'priority': 'max',
+              'default_sound': true,
+              'default_vibrate': true,
+            }
+          },
+          'apns': {
+            'payload': {
+              'aps': {
+                'alert': {
+                  'title': title,
+                  'body': body,
+                },
+                'badge': 1,
+                'sound': 'default',
+              }
+            }
+          }
         }),
       );
 
       if (response.statusCode == 200) {
         if (kDebugMode) {
-          print('Legacy FCM notification sent successfully');
-          print('Response: ${response.body}');
+          print('✅ Legacy FCM notification sent successfully to topic: $topic');
+          print('📱 Response: ${response.body}');
         }
         return true;
       } else {
         if (kDebugMode) {
-          print('Failed to send legacy FCM notification: ${response.statusCode}');
-          print('Response: ${response.body}');
+          print('❌ Failed to send legacy FCM notification: ${response.statusCode}');
+          print('📱 Response: ${response.body}');
         }
         return false;
       }
     } catch (e) {
       if (kDebugMode) {
-        print('Error sending legacy FCM notification: $e');
+        print('💥 Error sending legacy FCM notification: $e');
       }
       return false;
     }
