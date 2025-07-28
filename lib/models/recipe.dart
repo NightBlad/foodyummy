@@ -2,7 +2,7 @@ class Recipe {
   final String id;
   final String title;
   final String description;
-  final String imageUrl;
+  final List<String> images; // Thay đổi từ String imageUrl thành List<String> images
   final List<String> ingredients;
   final List<String> instructions;
   final String category;
@@ -19,7 +19,7 @@ class Recipe {
     required this.id,
     required this.title,
     required this.description,
-    required this.imageUrl,
+    required this.images, // Thay đổi từ imageUrl thành images
     required this.ingredients,
     required this.instructions,
     required this.category,
@@ -33,12 +33,18 @@ class Recipe {
     this.ratingCount = 0,
   });
 
+  // Getter để lấy ảnh bìa (ảnh đầu tiên)
+  String get coverImage => images.isNotEmpty ? images.first : '';
+
+  // Getter để tương thích với code cũ
+  String get imageUrl => coverImage;
+
   Map<String, dynamic> toMap() {
     return {
       'id': id,
       'title': title,
       'description': description,
-      'imageUrl': imageUrl,
+      'images': images, // Thay đổi từ imageUrl thành images
       'ingredients': ingredients,
       'instructions': instructions,
       'category': category,
@@ -54,22 +60,34 @@ class Recipe {
   }
 
   factory Recipe.fromMap(Map<String, dynamic> map) {
+    // Xử lý tương thích với dữ liệu cũ và mới
+    List<String> imagesList = [];
+
+    // Nếu có trường 'images' (dữ liệu mới)
+    if (map['images'] != null) {
+      imagesList = List<String>.from(map['images']);
+    }
+    // Nếu có trường 'imageUrl' (dữ liệu cũ) và chưa có images
+    else if (map['imageUrl'] != null && map['imageUrl'].toString().isNotEmpty) {
+      imagesList = [map['imageUrl'].toString()];
+    }
+
     return Recipe(
       id: map['id'] ?? '',
       title: map['title'] ?? '',
       description: map['description'] ?? '',
-      imageUrl: map['imageUrl'] ?? '',
+      images: imagesList, // Sử dụng imagesList đã xử lý
       ingredients: List<String>.from(map['ingredients'] ?? []),
       instructions: List<String>.from(map['instructions'] ?? []),
       category: map['category'] ?? '',
-      cookingTime: map['cookingTime'] ?? 0,
-      servings: map['servings'] ?? 1,
+      cookingTime: map['cookingTime']?.toInt() ?? 0,
+      servings: map['servings']?.toInt() ?? 0,
       difficulty: map['difficulty'] ?? 'easy',
       createdBy: map['createdBy'] ?? '',
       createdAt: DateTime.fromMillisecondsSinceEpoch(map['createdAt'] ?? 0),
       tags: List<String>.from(map['tags'] ?? []),
-      rating: (map['rating'] ?? 0.0).toDouble(),
-      ratingCount: map['ratingCount'] ?? 0,
+      rating: map['rating']?.toDouble() ?? 0.0,
+      ratingCount: map['ratingCount']?.toInt() ?? 0,
     );
   }
 }
