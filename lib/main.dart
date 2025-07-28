@@ -7,13 +7,14 @@ import 'package:shared_preferences/shared_preferences.dart';
 import 'utils/utf8_config.dart';
 import 'screens/login_screen.dart';
 import 'screens/menu_screen.dart';
-import 'screens/app_initializer.dart'; // Thêm import này
+import 'screens/app_initializer.dart';
 import 'screens/user_management_screen.dart';
 import 'screens/recipe_management_screen.dart';
 import 'screens/ingredient_management_screen.dart';
 import 'screens/admin_statistics_screen.dart';
 import 'screens/admin_settings_screen.dart';
-import 'services/notification_service.dart'; // Thêm import này
+import 'services/notification_service.dart';
+import 'services/notification_handler.dart';
 
 // Hàm xử lý thông báo khi app ở background
 Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
@@ -21,6 +22,8 @@ Future<void> _firebaseMessagingBackgroundHandler(RemoteMessage message) async {
   print('Handling a background message: ${message.messageId}');
   print('Title: ${message.notification?.title}');
   print('Body: ${message.notification?.body}');
+
+  // Có thể lưu thông báo vào local storage để hiển thị khi user mở app
 }
 
 class AppSettings extends ChangeNotifier {
@@ -62,91 +65,125 @@ class AppSettings extends ChangeNotifier {
 
 void main() async {
   WidgetsFlutterBinding.ensureInitialized();
+
+  // Initialize Firebase
   await Firebase.initializeApp();
 
-  // Đăng ký handler cho background messages
+  // Set up background message handler
   FirebaseMessaging.onBackgroundMessage(_firebaseMessagingBackgroundHandler);
 
-  // Khởi tạo Notification Service
-  await NotificationService().initialize();
-
-  // Cấu hình UTF-8 cho Firestore
-  UTF8Config.configureFirestore();
-
-
   runApp(
-    ChangeNotifierProvider(create: (_) => AppSettings(), child: const MyApp()),
+    ChangeNotifierProvider(
+      create: (context) => AppSettings(),
+      child: const FoodYummyApp(),
+    ),
   );
 }
 
-class MyApp extends StatelessWidget {
-  const MyApp({super.key});
+class FoodYummyApp extends StatefulWidget {
+  const FoodYummyApp({super.key});
+
+  @override
+  State<FoodYummyApp> createState() => _FoodYummyAppState();
+}
+
+class _FoodYummyAppState extends State<FoodYummyApp> {
+  @override
+  void initState() {
+    super.initState();
+    _setupNotifications();
+  }
+
+  // Setup notifications khi app khởi động
+  Future<void> _setupNotifications() async {
+    // Initialize notification service
+    await NotificationService().initialize();
+
+    // Handle notification khi app được mở từ terminated state
+    await NotificationHandler.handleInitialMessage();
+  }
 
   @override
   Widget build(BuildContext context) {
-    final appSettings = Provider.of<AppSettings>(context);
-    return MaterialApp(
-      title: 'FoodyYummy - Ứng dụng nấu ăn',
-      debugShowCheckedModeBanner: false,
-      theme: ThemeData(
-        brightness: appSettings.isDarkMode ? Brightness.dark : Brightness.light,
-        primarySwatch: Colors.red,
-        primaryColor: const Color(0xFFFF6B6B),
-        fontFamily: 'Roboto',
-        visualDensity: VisualDensity.adaptivePlatformDensity,
-        appBarTheme: AppBarTheme(
-          backgroundColor: appSettings.isDarkMode
-              ? Colors.grey[900]
-              : const Color(0xFFFF6B6B),
-          foregroundColor: appSettings.isDarkMode ? Colors.white : Colors.white,
-          elevation: 0,
-        ),
-        scaffoldBackgroundColor: appSettings.isDarkMode
-            ? Colors.grey[900]
-            : const Color(0xFFF8F9FA),
-        cardColor: appSettings.isDarkMode ? Colors.grey[850] : Colors.white,
-        canvasColor: appSettings.isDarkMode ? Colors.grey[900] : Colors.white,
-        dialogTheme: DialogThemeData(
-          backgroundColor: appSettings.isDarkMode
-              ? Colors.grey[850]
-              : Colors.white,
-        ),
-        tabBarTheme: TabBarThemeData(
-          labelColor: appSettings.isDarkMode
-              ? Colors.red[200]
-              : const Color(0xFFFF6B6B),
-          unselectedLabelColor: appSettings.isDarkMode
-              ? Colors.grey[400]
-              : Colors.grey,
-        ),
-        splashFactory: NoSplash.splashFactory,
-        highlightColor: Colors.transparent,
-      ),
-      home: StreamBuilder<User?>(
-        stream: FirebaseAuth.instance.authStateChanges(),
-        builder: (context, snapshot) {
-          if (snapshot.connectionState == ConnectionState.waiting) {
-            return const Scaffold(
-              body: Center(
-                child: CircularProgressIndicator(
-                  valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B6B)),
-                ),
-              ),
-            );
-          }
-          if (snapshot.hasData) {
-            return const AppInitializer(); // Thay đổi từ RecipeScreen() sang AppInitializer()
-          }
-          return const LoginScreen();
-        },
-      ),
-      routes: {
-        '/user-management': (context) => const UserManagementScreen(),
-        '/recipe-management': (context) => const RecipeManagementScreen(),
-        '/ingredient-management': (context) =>
-        const IngredientManagementScreen(),
-        '/admin-statistics': (context) => const AdminStatisticsScreen(),
-        '/admin-settings': (context) => const AdminSettingsScreen(),
+    return Consumer<AppSettings>(
+      builder: (context, settings, child) {
+        // Set context cho NotificationHandler
+        WidgetsBinding.instance.addPostFrameCallback((_) {
+          NotificationHandler.setContext(context);
+        });
+
+        return MaterialApp(
+          title: 'FoodyYummy - Ứng dụng nấu ăn',
+          debugShowCheckedModeBanner: false,
+          theme: ThemeData(
+            brightness: settings.isDarkMode ? Brightness.dark : Brightness.light,
+            primarySwatch: Colors.red,
+            primaryColor: const Color(0xFFFF6B6B),
+            fontFamily: 'Roboto',
+            visualDensity: VisualDensity.adaptivePlatformDensity,
+            appBarTheme: AppBarTheme(
+              backgroundColor: settings.isDarkMode
+                  ? Colors.grey[900]
+                  : const Color(0xFFFF6B6B),
+              foregroundColor: settings.isDarkMode ? Colors.white : Colors.white,
+              elevation: 0,
+            ),
+            scaffoldBackgroundColor: settings.isDarkMode
+                ? Colors.grey[900]
+                : const Color(0xFFF8F9FA),
+            cardColor: settings.isDarkMode ? Colors.grey[850] : Colors.white,
+            canvasColor: settings.isDarkMode ? Colors.grey[900] : Colors.white,
+            dialogTheme: DialogThemeData(
+              backgroundColor: settings.isDarkMode
+                  ? Colors.grey[850]
+                  : Colors.white,
+            ),
+            tabBarTheme: TabBarThemeData(
+              labelColor: settings.isDarkMode
+                  ? Colors.red[200]
+                  : const Color(0xFFFF6B6B),
+              unselectedLabelColor: settings.isDarkMode
+                  ? Colors.grey[400]
+                  : Colors.grey,
+            ),
+            splashFactory: NoSplash.splashFactory,
+            highlightColor: Colors.transparent,
+            textTheme: TextTheme(
+              bodyLarge: TextStyle(fontSize: settings.fontSize),
+              bodyMedium: TextStyle(fontSize: settings.fontSize - 2),
+            ),
+          ),
+          navigatorKey: GlobalKey<NavigatorState>(),
+          home: Builder(
+            builder: (context) {
+              return StreamBuilder<User?>(
+                stream: FirebaseAuth.instance.authStateChanges(),
+                builder: (context, snapshot) {
+                  if (snapshot.connectionState == ConnectionState.waiting) {
+                    return const Scaffold(
+                      body: Center(
+                        child: CircularProgressIndicator(
+                          valueColor: AlwaysStoppedAnimation<Color>(Color(0xFFFF6B6B)),
+                        ),
+                      ),
+                    );
+                  }
+                  if (snapshot.hasData) {
+                    return const AppInitializer();
+                  }
+                  return const LoginScreen();
+                },
+              );
+            },
+          ),
+          routes: {
+            '/user-management': (context) => const UserManagementScreen(),
+            '/recipe-management': (context) => const RecipeManagementScreen(),
+            '/ingredient-management': (context) => const IngredientManagementScreen(),
+            '/admin-statistics': (context) => const AdminStatisticsScreen(),
+            '/admin-settings': (context) => const AdminSettingsScreen(),
+          },
+        );
       },
     );
   }

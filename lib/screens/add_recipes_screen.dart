@@ -232,13 +232,10 @@ class _AddRecipeScreenState extends State<AddRecipeScreen> {
 
         // Gửi notification cho tất cả users về công thức mới
         if (addedRecipe != null) {
-          final currentUser = await _firestoreService.getUser(user.uid);
-          final authorName = currentUser?.name ?? 'Người dùng';
-
           await NotificationService().triggerNewRecipeNotification(
             recipeId: addedRecipe, // addedRecipe đã là String ID, không cần .id
             recipeTitle: recipe.title,
-            authorName: authorName,
+            category: recipe.category,
           );
         }
 

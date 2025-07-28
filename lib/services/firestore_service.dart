@@ -4,9 +4,11 @@ import '../models/recipe.dart';
 import '../models/favorite.dart';
 import '../models/ingredient.dart';
 import '../utils/utf8_config.dart';
+import 'auto_notification_service.dart';
 
 class FirestoreService {
   final FirebaseFirestore _db = FirebaseFirestore.instance;
+  final AutoNotificationService _autoNotificationService = AutoNotificationService();
 
   // ==================== USER MANAGEMENT ====================
 
@@ -79,6 +81,33 @@ class FirestoreService {
 
       // Cập nhật ID của recipe
       await docRef.update({'id': docRef.id});
+
+      // Tạo recipe object với ID đã cập nhật để gửi notification
+      final recipeWithId = Recipe(
+        id: docRef.id,
+        title: recipe.title,
+        description: recipe.description,
+        images: recipe.images, // Sửa từ imageUrl thành images
+        ingredients: recipe.ingredients,
+        instructions: recipe.instructions,
+        category: recipe.category,
+        cookingTime: recipe.cookingTime,
+        difficulty: recipe.difficulty,
+        servings: recipe.servings,
+        createdBy: recipe.createdBy,
+        createdAt: recipe.createdAt,
+        tags: recipe.tags,
+        rating: recipe.rating,
+        ratingCount: recipe.ratingCount,
+      );
+
+      // Gửi thông báo tự động cho tất cả users
+      await _autoNotificationService.sendNewRecipeNotification(recipeWithId);
+
+      // Gửi thông báo theo category nếu có
+      if (recipe.category.isNotEmpty) {
+        await _autoNotificationService.sendCategoryNotification(recipe.category, recipeWithId);
+      }
 
       return docRef.id;
     } catch (e) {

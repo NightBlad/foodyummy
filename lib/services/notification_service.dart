@@ -1,11 +1,10 @@
 import 'dart:convert';
-import 'dart:io';
 import 'package:flutter/foundation.dart';
 import 'package:firebase_messaging/firebase_messaging.dart';
 import 'package:flutter_local_notifications/flutter_local_notifications.dart';
 import 'package:http/http.dart' as http;
-import 'package:firebase_auth/firebase_auth.dart';
 import 'package:dart_jsonwebtoken/dart_jsonwebtoken.dart';
+import 'notification_handler.dart';
 
 class NotificationService {
   static final NotificationService _instance = NotificationService._internal();
@@ -57,6 +56,28 @@ Btiw7U1rguVlCZV2ErpcDDAy
 
     // Setup Firebase messaging
     await _setupFirebaseMessaging();
+
+    // Auto-subscribe to all_users topic để nhận thông báo từ admin
+    await _autoSubscribeToTopics();
+  }
+
+  // Auto subscribe to important topics
+  Future<void> _autoSubscribeToTopics() async {
+    try {
+      // Subscribe to all users topic
+      await subscribeToTopic('all_users');
+
+      // Subscribe to new recipes topic
+      await subscribeToTopic('new_recipes');
+
+      if (kDebugMode) {
+        print('Auto-subscribed to notification topics');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error auto-subscribing to topics: $e');
+      }
+    }
   }
 
   Future<void> requestPermissions() async {
@@ -95,10 +116,8 @@ Btiw7U1rguVlCZV2ErpcDDAy
     await _localNotifications.initialize(
       initializationSettings,
       onDidReceiveNotificationResponse: (NotificationResponse response) {
-        // Handle notification tap
-        if (kDebugMode) {
-          print('Notification tapped: ${response.payload}');
-        }
+        // Handle notification tap với NotificationHandler
+        NotificationHandler.handleNotificationTap(response.payload);
       },
     );
   }
@@ -126,20 +145,41 @@ Btiw7U1rguVlCZV2ErpcDDAy
   }
 
   Future<void> _showLocalNotification(RemoteMessage message) async {
-    const AndroidNotificationDetails androidPlatformChannelSpecifics =
+    // Create action buttons for new recipe notifications
+    List<AndroidNotificationAction> actions = [];
+    if (message.data['type'] == 'new_recipe') {
+      actions.add(
+        const AndroidNotificationAction(
+          'explore_recipe',
+          'Tìm hiểu ngay',
+          icon: DrawableResourceAndroidBitmap('ic_notification'),
+        ),
+      );
+    }
+
+    final AndroidNotificationDetails androidPlatformChannelSpecifics =
         AndroidNotificationDetails(
       'foodyummy_channel',
       'FoodYummy Notifications',
       channelDescription: 'Notification channel for FoodYummy app',
       importance: Importance.max,
       priority: Priority.high,
-      showWhen: false,
+      showWhen: true,
+      when: DateTime.now().millisecondsSinceEpoch,
+      actions: actions,
+      styleInformation: const BigTextStyleInformation(''),
+      icon: 'ic_notification',
+      largeIcon: const DrawableResourceAndroidBitmap('ic_notification'),
     );
 
     const DarwinNotificationDetails iOSPlatformChannelSpecifics =
-        DarwinNotificationDetails();
+        DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
 
-    const NotificationDetails platformChannelSpecifics = NotificationDetails(
+    final NotificationDetails platformChannelSpecifics = NotificationDetails(
       android: androidPlatformChannelSpecifics,
       iOS: iOSPlatformChannelSpecifics,
     );
@@ -263,20 +303,22 @@ Btiw7U1rguVlCZV2ErpcDDAy
     }
   }
 
-  // Get access token using JWT
+  // Generate access token using JWT
   Future<String?> _getAccessToken() async {
     try {
-      final now = DateTime.now();
+      // Create JWT payload
       final jwt = JWT({
         'iss': _clientEmail,
         'scope': 'https://www.googleapis.com/auth/firebase.messaging',
         'aud': 'https://oauth2.googleapis.com/token',
-        'exp': now.add(Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000,
-        'iat': now.millisecondsSinceEpoch ~/ 1000,
+        'exp': DateTime.now().add(const Duration(hours: 1)).millisecondsSinceEpoch ~/ 1000,
+        'iat': DateTime.now().millisecondsSinceEpoch ~/ 1000,
       });
 
-      final token = jwt.sign(RSAPrivateKey(_privateKey), algorithm: JWTAlgorithm.RS256);
+      // Sign the JWT
+      final token = jwt.sign(RSAPrivateKey(_privateKey));
 
+      // Exchange JWT for access token
       final response = await http.post(
         Uri.parse('https://oauth2.googleapis.com/token'),
         headers: {'Content-Type': 'application/x-www-form-urlencoded'},
@@ -304,7 +346,77 @@ Btiw7U1rguVlCZV2ErpcDDAy
     }
   }
 
-  // Send notification to all users (topic-based)
+  // Subscribe user to category-specific topics
+  Future<void> subscribeToCategories(List<String> categories) async {
+    try {
+      for (String category in categories) {
+        final topicName = 'category_${category.toLowerCase().replaceAll(' ', '_')}';
+        await subscribeToTopic(topicName);
+      }
+
+      // Also subscribe to recipe updates
+      await subscribeToTopic('recipe_updates');
+
+      if (kDebugMode) {
+        print('Subscribed to category topics: $categories');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error subscribing to category topics: $e');
+      }
+    }
+  }
+
+  // Show immediate notification for foreground apps
+  Future<void> showImmediateNotification({
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    final androidDetails = AndroidNotificationDetails(
+      'foodyummy_channel',
+      'FoodYummy Notifications',
+      channelDescription: 'Notification channel for FoodYummy app',
+      importance: Importance.max,
+      priority: Priority.high,
+      icon: 'ic_notification',
+    );
+
+    const iosDetails = DarwinNotificationDetails(
+      presentAlert: true,
+      presentBadge: true,
+      presentSound: true,
+    );
+
+    final details = NotificationDetails(
+      android: androidDetails,
+      iOS: iosDetails,
+    );
+
+    await _localNotifications.show(
+      DateTime.now().millisecondsSinceEpoch ~/ 1000,
+      title,
+      body,
+      details,
+      payload: data != null ? json.encode(data) : null,
+    );
+  }
+
+  // Thêm các method bị thiếu cho backward compatibility
+  Future<bool> sendNotificationToUser({
+    required String userToken,
+    required String title,
+    required String body,
+    Map<String, dynamic>? data,
+  }) async {
+    return await sendNotification(
+      title: title,
+      body: body,
+      token: userToken,
+      data: data,
+    );
+  }
+
   Future<bool> sendNotificationToAll({
     required String title,
     required String body,
@@ -318,112 +430,144 @@ Btiw7U1rguVlCZV2ErpcDDAy
     );
   }
 
-  // Send notification to specific user
-  Future<bool> sendNotificationToUser({
+  // Trigger notification for new recipe - Simplified version (chỉ local notification)
+  Future<bool> triggerNewRecipeNotification({
+    required String recipeTitle,
+    required String recipeId,
+    String? category,
+  }) async {
+    try {
+      // Chỉ hiển thị local notification đơn giản, không cần FCM
+      await showSimpleLocalNotification(
+        title: "🍽️ Món mới đã thêm thành công!",
+        body: "\"$recipeTitle\" đã được thêm vào bộ sưu tập${category != null ? ' trong danh mục $category' : ''}",
+        recipeId: recipeId,
+      );
+
+      if (kDebugMode) {
+        print('Local notification sent for recipe: $recipeTitle');
+      }
+
+      return true;
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error in triggerNewRecipeNotification: $e');
+      }
+      return false;
+    }
+  }
+
+  // Hiển thị local notification đơn giản và ổn định
+  Future<void> showSimpleLocalNotification({
     required String title,
     required String body,
-    required String userToken,
-    Map<String, dynamic>? data,
+    required String recipeId,
   }) async {
-    return await sendNotification(
+    try {
+      const AndroidNotificationDetails androidDetails = AndroidNotificationDetails(
+        'foodyummy_simple',
+        'FoodYummy Notifications',
+        channelDescription: 'Thông báo từ ứng dụng FoodYummy',
+        importance: Importance.high,
+        priority: Priority.high,
+        showWhen: true,
+        autoCancel: true,
+        enableVibration: true,
+        playSound: true,
+        // Bỏ custom sound, dùng sound mặc định
+        icon: '@mipmap/ic_launcher',
+        styleInformation: BigTextStyleInformation(''),
+      );
+
+      const DarwinNotificationDetails iosDetails = DarwinNotificationDetails(
+        presentAlert: true,
+        presentBadge: true,
+        presentSound: true,
+        // Bỏ custom sound cho iOS
+        badgeNumber: 1,
+      );
+
+      const NotificationDetails platformDetails = NotificationDetails(
+        android: androidDetails,
+        iOS: iosDetails,
+      );
+
+      await _localNotifications.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title,
+        body,
+        platformDetails,
+        payload: json.encode({
+          'type': 'new_recipe',
+          'recipe_id': recipeId,
+        }),
+      );
+
+      if (kDebugMode) {
+        print('Simple notification displayed successfully');
+      }
+    } catch (e) {
+      if (kDebugMode) {
+        print('Error showing simple notification: $e');
+      }
+    }
+  }
+
+  // Show local notification for new recipe - Simplified version
+  Future<void> showLocalNotificationForNewRecipe({
+    required String title,
+    required String body,
+    required String recipeId,
+  }) async {
+    // Gọi method đơn giản hơn
+    await showSimpleLocalNotification(
       title: title,
       body: body,
-      token: userToken,
-      data: data,
+      recipeId: recipeId,
     );
   }
 
-  // Method for triggering new recipe notifications
-  Future<void> triggerNewRecipeNotification({
-    required String recipeTitle,
-    required String recipeId,
-    String? authorName,
+  // Alternative simple notification method - Updated
+  Future<bool> sendSimpleNotification({
+    required String title,
+    required String body,
+    String? recipeId,
   }) async {
     try {
-      String title = "Công thức mới!";
-      String body = authorName != null
-        ? "$authorName đã thêm công thức: $recipeTitle"
-        : "Công thức mới đã được thêm: $recipeTitle";
+      const NotificationDetails details = NotificationDetails(
+        android: AndroidNotificationDetails(
+          'foodyummy_basic',
+          'FoodYummy Basic Notifications',
+          channelDescription: 'Thông báo cơ bản từ FoodYummy',
+          importance: Importance.high,
+          priority: Priority.high,
+          icon: '@mipmap/ic_launcher',
+          // Không dùng custom sound
+        ),
+        iOS: DarwinNotificationDetails(
+          presentAlert: true,
+          presentBadge: true,
+          presentSound: true,
+        ),
+      );
 
-      // Send to all users topic
-      await sendNotificationToAll(
-        title: title,
-        body: body,
-        data: {
+      await _localNotifications.show(
+        DateTime.now().millisecondsSinceEpoch ~/ 1000,
+        title,
+        body,
+        details,
+        payload: recipeId != null ? json.encode({
           'type': 'new_recipe',
           'recipe_id': recipeId,
-          'recipe_title': recipeTitle,
-          'timestamp': DateTime.now().toIso8601String(),
-        },
+        }) : null,
       );
 
-      if (kDebugMode) {
-        print('New recipe notification sent: $recipeTitle');
-      }
+      return true;
     } catch (e) {
       if (kDebugMode) {
-        print('Error sending new recipe notification: $e');
+        print('Error sending simple notification: $e');
       }
-    }
-  }
-
-  // Method for triggering user activity notifications
-  Future<void> triggerUserActivityNotification({
-    required String title,
-    required String body,
-    required String targetUserId,
-    Map<String, dynamic>? additionalData,
-  }) async {
-    try {
-      // In a real app, you would get the user's FCM token from Firestore
-      // For now, we'll send to a topic based on user ID
-      await sendNotification(
-        title: title,
-        body: body,
-        topic: 'user_$targetUserId',
-        data: {
-          'type': 'user_activity',
-          'target_user_id': targetUserId,
-          'timestamp': DateTime.now().toIso8601String(),
-          ...?additionalData,
-        },
-      );
-
-      if (kDebugMode) {
-        print('User activity notification sent to: $targetUserId');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error sending user activity notification: $e');
-      }
-    }
-  }
-
-  // Method for triggering admin notifications
-  Future<void> triggerAdminNotification({
-    required String title,
-    required String body,
-    Map<String, dynamic>? additionalData,
-  }) async {
-    try {
-      await sendNotification(
-        title: title,
-        body: body,
-        topic: 'admin_notifications',
-        data: {
-          'type': 'admin',
-          'timestamp': DateTime.now().toIso8601String(),
-          ...?additionalData,
-        },
-      );
-
-      if (kDebugMode) {
-        print('Admin notification sent');
-      }
-    } catch (e) {
-      if (kDebugMode) {
-        print('Error sending admin notification: $e');
-      }
+      return false;
     }
   }
 }
