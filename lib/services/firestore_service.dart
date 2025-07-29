@@ -288,6 +288,21 @@ class FirestoreService {
         );
   }
 
+  // Lấy công thức theo userId
+  Stream<List<Recipe>> getRecipesByUser(String userId) {
+    return _db
+        .collection('recipes')
+        .where('createdBy', isEqualTo: userId)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs.map((doc) {
+        final cleanData = UTF8Config.cleanDataFromFirestore(doc.data() as Map<String, dynamic>);
+        return Recipe.fromMap(cleanData);
+      }).toList(),
+    );
+  }
+
   Future<void> updateFavorite(String id, Favorite favorite) async {
     try {
       await _db.collection('favorites').doc(id).update(favorite.toMap());

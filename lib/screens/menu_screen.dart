@@ -46,11 +46,13 @@ class _RecipeScreenState extends State<RecipeScreen>
     _tabController = TabController(
       length: 4,
       vsync: this,
-      animationDuration: const Duration(
-        milliseconds: 400,
-      ), // Hiệu ứng chuyển tab mượt hơn
+      animationDuration: const Duration(milliseconds: 400),
     );
-    _loadCurrentUser();
+    _loadCurrentUser().then((_) {
+      if (mounted) {
+        setState(() {}); // Chỉ gọi setState nếu widget còn trong cây
+      }
+    });
   }
 
   @override
@@ -157,10 +159,10 @@ class _RecipeScreenState extends State<RecipeScreen>
             gradient: Theme.of(context).brightness == Brightness.dark
                 ? null
                 : const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
-                  ),
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
+            ),
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.grey[900]
                 : null,
@@ -220,19 +222,6 @@ class _RecipeScreenState extends State<RecipeScreen>
               ],
             ),
           ),
-          Container(
-            decoration: BoxDecoration(
-              color: const Color(0xFFFF6B6B).withOpacity(0.1),
-              shape: BoxShape.circle,
-            ),
-            child: IconButton(
-              icon: const Icon(
-                Icons.notifications_outlined,
-                color: Color(0xFFFF6B6B),
-              ),
-              onPressed: () {},
-            ),
-          ),
           const SizedBox(width: 10),
           GestureDetector(
             onTap: () async {
@@ -287,17 +276,17 @@ class _RecipeScreenState extends State<RecipeScreen>
           prefixIcon: Icon(Icons.search, color: const Color(0xFFFF6B6B)),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: Icon(
-                    Icons.clear,
-                    color: isDarkMode ? Colors.white : Colors.grey,
-                  ),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() {
-                      _searchQuery = '';
-                    });
-                  },
-                )
+            icon: Icon(
+              Icons.clear,
+              color: isDarkMode ? Colors.white : Colors.grey,
+            ),
+            onPressed: () {
+              _searchController.clear();
+              setState(() {
+                _searchQuery = '';
+              });
+            },
+          )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -408,9 +397,10 @@ class _RecipeScreenState extends State<RecipeScreen>
     );
   }
 
-
   Widget _buildRecipeList() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
+    final currentUserId = _currentUser?.id;
+    print('Current User ID: $currentUserId, Is Admin: ${_currentUser?.isAdmin ?? false}');
 
     return Column(
       children: [
@@ -421,9 +411,12 @@ class _RecipeScreenState extends State<RecipeScreen>
             stream: _searchQuery.isNotEmpty
                 ? _firestoreService.searchRecipes(_searchQuery)
                 : _selectedCategory == 'Tất cả'
-                ? _firestoreService.getRecipes()
+                ? (currentUserId != null && !(_currentUser?.isAdmin ?? false)
+                ? _firestoreService.getRecipesByUser(currentUserId)
+                : _firestoreService.getRecipes())
                 : _firestoreService.getRecipesByCategory(_selectedCategory),
             builder: (context, snapshot) {
+              print('Snapshot connection state: ${snapshot.connectionState}, Has data: ${snapshot.hasData}, Data length: ${snapshot.data?.length}');
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
                   child: CircularProgressIndicator(
@@ -438,8 +431,11 @@ class _RecipeScreenState extends State<RecipeScreen>
                 if (_searchQuery.isNotEmpty) {
                   message = 'Không tìm thấy công thức cho "$_searchQuery"';
                 } else if (_selectedCategory != 'Tất cả') {
-                  message =
-                  'Chưa có công thức nào trong danh mục "$_selectedCategory"';
+                  message = 'Chưa có công thức nào trong danh mục "$_selectedCategory"';
+                } else if (currentUserId != null && !(_currentUser?.isAdmin ?? false)) {
+                  message = 'Bạn chưa tạo công thức nào. Hãy thêm công thức mới!';
+                } else if (currentUserId == null) {
+                  message = 'Vui lòng đăng nhập để xem công thức của bạn.';
                 }
                 return _buildEmptyState(
                   message: message,
@@ -447,11 +443,10 @@ class _RecipeScreenState extends State<RecipeScreen>
               }
               return RefreshIndicator(
                 onRefresh: () async {
-                  setState(() {});
+                  if (mounted) setState(() {});
                 },
                 color: const Color(0xFFFF6B6B),
-                backgroundColor:
-                isDarkMode ? Colors.grey[850] : Colors.white,
+                backgroundColor: isDarkMode ? Colors.grey[850] : Colors.white,
                 child: ListView.builder(
                   padding: const EdgeInsets.all(20),
                   itemCount: snapshot.data!.length,
@@ -466,7 +461,6 @@ class _RecipeScreenState extends State<RecipeScreen>
       ],
     );
   }
-
 
   Widget _buildRecipeCard(Recipe recipe) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -655,7 +649,6 @@ class _RecipeScreenState extends State<RecipeScreen>
     );
   }
 
-
   Widget _buildInfoChip(IconData icon, String text) {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final color = isDarkMode ? Colors.grey[300] : Colors.grey[600];
@@ -671,7 +664,6 @@ class _RecipeScreenState extends State<RecipeScreen>
       ],
     );
   }
-
 
   Widget _buildFavoritesList() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
@@ -707,7 +699,6 @@ class _RecipeScreenState extends State<RecipeScreen>
       },
     );
   }
-
 
   Widget _buildCategoriesGrid() {
     return GridView.builder(
