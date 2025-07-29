@@ -3,8 +3,10 @@ import 'package:firebase_auth/firebase_auth.dart';
 import '../models/recipe.dart';
 import '../models/user.dart';
 import '../services/firestore_service.dart';
+import '../services/usage_limit_service.dart';
 import 'recipe_detail_screen.dart';
 import 'add_recipes_screen.dart';
+import 'ai_recipe_generator_screen.dart';
 import 'admin_panel_screen.dart';
 import 'notification_test_screen.dart'; // Thêm import này
 import 'settings_screen.dart';
@@ -159,10 +161,10 @@ class _RecipeScreenState extends State<RecipeScreen>
             gradient: Theme.of(context).brightness == Brightness.dark
                 ? null
                 : const LinearGradient(
-              begin: Alignment.topCenter,
-              end: Alignment.bottomCenter,
-              colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
-            ),
+                    begin: Alignment.topCenter,
+                    end: Alignment.bottomCenter,
+                    colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
+                  ),
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.grey[900]
                 : null,
@@ -276,17 +278,17 @@ class _RecipeScreenState extends State<RecipeScreen>
           prefixIcon: Icon(Icons.search, color: const Color(0xFFFF6B6B)),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-            icon: Icon(
-              Icons.clear,
-              color: isDarkMode ? Colors.white : Colors.grey,
-            ),
-            onPressed: () {
-              _searchController.clear();
-              setState(() {
-                _searchQuery = '';
-              });
-            },
-          )
+                  icon: Icon(
+                    Icons.clear,
+                    color: isDarkMode ? Colors.white : Colors.grey,
+                  ),
+                  onPressed: () {
+                    _searchController.clear();
+                    setState(() {
+                      _searchQuery = '';
+                    });
+                  },
+                )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -386,8 +388,7 @@ class _RecipeScreenState extends State<RecipeScreen>
                   color: isSelected
                       ? Colors.white
                       : (isDarkMode ? Colors.grey[200] : Colors.grey[700]),
-                  fontWeight:
-                  isSelected ? FontWeight.bold : FontWeight.normal,
+                  fontWeight: isSelected ? FontWeight.bold : FontWeight.normal,
                 ),
               ),
             ),
@@ -400,7 +401,9 @@ class _RecipeScreenState extends State<RecipeScreen>
   Widget _buildRecipeList() {
     final isDarkMode = Theme.of(context).brightness == Brightness.dark;
     final currentUserId = _currentUser?.id;
-    print('Current User ID: $currentUserId, Is Admin: ${_currentUser?.isAdmin ?? false}');
+    print(
+      'Current User ID: $currentUserId, Is Admin: ${_currentUser?.isAdmin ?? false}',
+    );
 
     return Column(
       children: [
@@ -412,11 +415,13 @@ class _RecipeScreenState extends State<RecipeScreen>
                 ? _firestoreService.searchRecipes(_searchQuery)
                 : _selectedCategory == 'Tất cả'
                 ? (currentUserId != null && !(_currentUser?.isAdmin ?? false)
-                ? _firestoreService.getRecipesByUser(currentUserId)
-                : _firestoreService.getRecipes())
+                      ? _firestoreService.getRecipesByUser(currentUserId)
+                      : _firestoreService.getRecipes())
                 : _firestoreService.getRecipesByCategory(_selectedCategory),
             builder: (context, snapshot) {
-              print('Snapshot connection state: ${snapshot.connectionState}, Has data: ${snapshot.hasData}, Data length: ${snapshot.data?.length}');
+              print(
+                'Snapshot connection state: ${snapshot.connectionState}, Has data: ${snapshot.hasData}, Data length: ${snapshot.data?.length}',
+              );
               if (snapshot.connectionState == ConnectionState.waiting) {
                 return const Center(
                   child: CircularProgressIndicator(
@@ -431,15 +436,16 @@ class _RecipeScreenState extends State<RecipeScreen>
                 if (_searchQuery.isNotEmpty) {
                   message = 'Không tìm thấy công thức cho "$_searchQuery"';
                 } else if (_selectedCategory != 'Tất cả') {
-                  message = 'Chưa có công thức nào trong danh mục "$_selectedCategory"';
-                } else if (currentUserId != null && !(_currentUser?.isAdmin ?? false)) {
-                  message = 'Bạn chưa tạo công thức nào. Hãy thêm công thức mới!';
+                  message =
+                      'Chưa có công thức nào trong danh mục "$_selectedCategory"';
+                } else if (currentUserId != null &&
+                    !(_currentUser?.isAdmin ?? false)) {
+                  message =
+                      'Bạn chưa tạo công thức nào. Hãy thêm công thức mới!';
                 } else if (currentUserId == null) {
                   message = 'Vui lòng đăng nhập để xem công thức của bạn.';
                 }
-                return _buildEmptyState(
-                  message: message,
-                );
+                return _buildEmptyState(message: message);
               }
               return RefreshIndicator(
                 onRefresh: () async {
@@ -499,58 +505,61 @@ class _RecipeScreenState extends State<RecipeScreen>
                 width: double.infinity,
                 child: recipe.imageUrl.isNotEmpty
                     ? Stack(
-                  children: [
-                    HybridImageWidget(
-                      imageUrl: recipe.imageUrl,
-                      width: double.infinity,
-                      height: 200,
-                      fit: BoxFit.cover,
-                    ),
-                    Positioned(
-                      top: 10,
-                      right: 10,
-                      child: Container(
-                        decoration: BoxDecoration(
-                          color: isDarkMode
-                              ? Colors.grey[800]
-                              : Colors.white,
-                          shape: BoxShape.circle,
-                          boxShadow: [
-                            BoxShadow(
-                              color: Colors.black.withOpacity(0.1),
-                              spreadRadius: 1,
-                              blurRadius: 5,
-                            ),
-                          ],
-                        ),
-                        child: IconButton(
-                          icon: Icon(
-                            _currentUser?.favoriteRecipes.contains(recipe.id) == true
-                                ? Icons.favorite
-                                : Icons.favorite_border,
-                            color: const Color(0xFFFF6B6B),
+                        children: [
+                          HybridImageWidget(
+                            imageUrl: recipe.imageUrl,
+                            width: double.infinity,
+                            height: 200,
+                            fit: BoxFit.cover,
                           ),
-                          onPressed: () {
-                            if (_currentUser != null) {
-                              _firestoreService.toggleFavoriteRecipe(
-                                _currentUser!.id,
-                                recipe.id,
-                              );
-                            }
-                          },
+                          Positioned(
+                            top: 10,
+                            right: 10,
+                            child: Container(
+                              decoration: BoxDecoration(
+                                color: isDarkMode
+                                    ? Colors.grey[800]
+                                    : Colors.white,
+                                shape: BoxShape.circle,
+                                boxShadow: [
+                                  BoxShadow(
+                                    color: Colors.black.withOpacity(0.1),
+                                    spreadRadius: 1,
+                                    blurRadius: 5,
+                                  ),
+                                ],
+                              ),
+                              child: IconButton(
+                                icon: Icon(
+                                  _currentUser?.favoriteRecipes.contains(
+                                            recipe.id,
+                                          ) ==
+                                          true
+                                      ? Icons.favorite
+                                      : Icons.favorite_border,
+                                  color: const Color(0xFFFF6B6B),
+                                ),
+                                onPressed: () {
+                                  if (_currentUser != null) {
+                                    _firestoreService.toggleFavoriteRecipe(
+                                      _currentUser!.id,
+                                      recipe.id,
+                                    );
+                                  }
+                                },
+                              ),
+                            ),
+                          ),
+                        ],
+                      )
+                    : Container(
+                        color: Colors.grey[200],
+                        child: const Icon(
+                          Icons.restaurant,
+                          size: 50,
+                          color: Colors.grey,
                         ),
                       ),
-                    ),
-                  ],
-                )
-                    : Container(
-                  color: Colors.grey[200],
-                  child: const Icon(
-                    Icons.restaurant,
-                    size: 50,
-                    color: Colors.grey,
-                  ),
-                ),
               ),
 
               // Recipe info
@@ -625,9 +634,15 @@ class _RecipeScreenState extends State<RecipeScreen>
                     const SizedBox(height: 12),
                     Row(
                       children: [
-                        _buildInfoChip(Icons.access_time, '${recipe.cookingTime} phút'),
+                        _buildInfoChip(
+                          Icons.access_time,
+                          '${recipe.cookingTime} phút',
+                        ),
                         const SizedBox(width: 16),
-                        _buildInfoChip(Icons.people, '${recipe.servings} người'),
+                        _buildInfoChip(
+                          Icons.people,
+                          '${recipe.servings} người',
+                        ),
                         const SizedBox(width: 16),
                         _buildInfoChip(
                           Icons.signal_cellular_alt,
@@ -657,10 +672,7 @@ class _RecipeScreenState extends State<RecipeScreen>
       children: [
         Icon(icon, size: 16, color: color),
         const SizedBox(width: 4),
-        Text(
-          text,
-          style: TextStyle(color: color, fontSize: 12),
-        ),
+        Text(text, style: TextStyle(color: color, fontSize: 12)),
       ],
     );
   }
@@ -978,19 +990,128 @@ class _RecipeScreenState extends State<RecipeScreen>
   }
 
   Widget _buildFloatingActionButton() {
-    return FloatingActionButton.extended(
-      onPressed: () {
-        Navigator.push(
-          context,
-          MaterialPageRoute(builder: (context) => const AddRecipeScreen()),
+    return FloatingActionButton(
+      onPressed: _showAddRecipeOptions,
+      backgroundColor: const Color(0xFFFF6B6B),
+      child: const Icon(Icons.add, color: Colors.white),
+    );
+  }
+
+  void _showAddRecipeOptions() {
+    showModalBottomSheet(
+      context: context,
+      isScrollControlled: true,
+      shape: const RoundedRectangleBorder(
+        borderRadius: BorderRadius.vertical(top: Radius.circular(20)),
+      ),
+      builder: (BuildContext context) {
+        return DraggableScrollableSheet(
+          initialChildSize: 0.6,
+          minChildSize: 0.4,
+          maxChildSize: 0.9,
+          expand: false,
+          builder: (context, scrollController) {
+            return SingleChildScrollView(
+              controller: scrollController,
+              child: Padding(
+                padding: const EdgeInsets.all(16),
+                child: Column(
+                  mainAxisSize: MainAxisSize.min,
+                  children: [
+                    Container(
+                      width: 40,
+                      height: 4,
+                      decoration: BoxDecoration(
+                        color: Colors.grey[300],
+                        borderRadius: BorderRadius.circular(2),
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    Text(
+                      'Tạo Công Thức',
+                      style: Theme.of(context).textTheme.titleLarge?.copyWith(
+                        fontWeight: FontWeight.bold,
+                      ),
+                    ),
+                    const SizedBox(height: 16),
+                    FutureBuilder<bool>(
+                      future: UsageLimitService.canGenerateRecipe(),
+                      builder: (context, snapshot) {
+                        final canUseAI = snapshot.data ?? false;
+
+                        return ListTile(
+                          leading: CircleAvatar(
+                            backgroundColor: canUseAI
+                                ? Colors.orange
+                                : Colors.grey,
+                            child: const Icon(
+                              Icons.auto_awesome,
+                              color: Colors.white,
+                            ),
+                          ),
+                          title: const Text('Tạo bằng AI'),
+                          subtitle: canUseAI
+                              ? const Text(
+                                  'Nhập nguyên liệu có sẵn, AI sẽ tạo công thức',
+                                )
+                              : const Text('Đã hết lượt sử dụng hôm nay'),
+                          enabled: canUseAI,
+                          onTap: canUseAI
+                              ? () {
+                                  Navigator.pop(context);
+                                  Navigator.push(
+                                    context,
+                                    MaterialPageRoute(
+                                      builder: (context) =>
+                                          const AIRecipeGeneratorScreen(),
+                                    ),
+                                  );
+                                }
+                              : () {
+                                  Navigator.pop(context);
+                                  ScaffoldMessenger.of(context).showSnackBar(
+                                    const SnackBar(
+                                      content: Text(
+                                        'Bạn đã hết lượt sử dụng AI hôm nay. Vui lòng thử lại vào ngày mai.',
+                                      ),
+                                      backgroundColor: Colors.red,
+                                    ),
+                                  );
+                                },
+                        );
+                      },
+                    ),
+                    const Divider(),
+                    ListTile(
+                      leading: const CircleAvatar(
+                        backgroundColor: Color(0xFFFF6B6B),
+                        child: Icon(Icons.edit, color: Colors.white),
+                      ),
+                      title: const Text('Tạo thủ công'),
+                      subtitle: const Text(
+                        'Tự nhập đầy đủ thông tin công thức',
+                      ),
+                      onTap: () {
+                        Navigator.pop(context);
+                        Navigator.push(
+                          context,
+                          MaterialPageRoute(
+                            builder: (context) => const AddRecipeScreen(),
+                          ),
+                        );
+                      },
+                    ),
+                    // Thêm padding bottom để tránh bị che bởi system UI
+                    SizedBox(
+                      height: MediaQuery.of(context).padding.bottom + 16,
+                    ),
+                  ],
+                ),
+              ),
+            );
+          },
         );
       },
-      backgroundColor: const Color(0xFFFF6B6B),
-      icon: const Icon(Icons.add, color: Colors.white),
-      label: const Text(
-        'Thêm công thức',
-        style: TextStyle(color: Colors.white, fontWeight: FontWeight.bold),
-      ),
     );
   }
 }
