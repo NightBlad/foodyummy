@@ -302,6 +302,21 @@ class FirestoreService {
       }).toList(),
     );
   }
+  // Lấy công thức theo userId và danh mục
+  Stream<List<Recipe>> getRecipesByUserAndCategory(String userId, String category) {
+    return _db
+        .collection('recipes')
+        .where('createdBy', isEqualTo: userId)
+        .where('category', isEqualTo: category)
+        .orderBy('createdAt', descending: true)
+        .snapshots()
+        .map(
+          (snapshot) => snapshot.docs.map((doc) {
+        final cleanData = UTF8Config.cleanDataFromFirestore(doc.data() as Map<String, dynamic>);
+        return Recipe.fromMap(cleanData);
+      }).toList(),
+    );
+  }
 
   Future<void> updateFavorite(String id, Favorite favorite) async {
     try {

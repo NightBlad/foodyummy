@@ -161,10 +161,10 @@ class _RecipeScreenState extends State<RecipeScreen>
             gradient: Theme.of(context).brightness == Brightness.dark
                 ? null
                 : const LinearGradient(
-                    begin: Alignment.topCenter,
-                    end: Alignment.bottomCenter,
-                    colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
-                  ),
+              begin: Alignment.topCenter,
+              end: Alignment.bottomCenter,
+              colors: [Color(0xFFF8F9FA), Color(0xFFFFFFFF)],
+            ),
             color: Theme.of(context).brightness == Brightness.dark
                 ? Colors.grey[900]
                 : null,
@@ -278,17 +278,17 @@ class _RecipeScreenState extends State<RecipeScreen>
           prefixIcon: Icon(Icons.search, color: const Color(0xFFFF6B6B)),
           suffixIcon: _searchQuery.isNotEmpty
               ? IconButton(
-                  icon: Icon(
-                    Icons.clear,
-                    color: isDarkMode ? Colors.white : Colors.grey,
-                  ),
-                  onPressed: () {
-                    _searchController.clear();
-                    setState(() {
-                      _searchQuery = '';
-                    });
-                  },
-                )
+            icon: Icon(
+              Icons.clear,
+              color: isDarkMode ? Colors.white : Colors.grey,
+            ),
+            onPressed: () {
+              _searchController.clear();
+              setState(() {
+                _searchQuery = '';
+              });
+            },
+          )
               : null,
           border: InputBorder.none,
           contentPadding: const EdgeInsets.symmetric(
@@ -415,9 +415,11 @@ class _RecipeScreenState extends State<RecipeScreen>
                 ? _firestoreService.searchRecipes(_searchQuery)
                 : _selectedCategory == 'Tất cả'
                 ? (currentUserId != null && !(_currentUser?.isAdmin ?? false)
-                      ? _firestoreService.getRecipesByUser(currentUserId)
-                      : _firestoreService.getRecipes())
-                : _firestoreService.getRecipesByCategory(_selectedCategory),
+                ? _firestoreService.getRecipesByUser(currentUserId)
+                : _firestoreService.getRecipes())
+                : (currentUserId != null && !(_currentUser?.isAdmin ?? false)
+                ? _firestoreService.getRecipesByUserAndCategory(currentUserId, _selectedCategory)
+                : _firestoreService.getRecipesByCategory(_selectedCategory)),
             builder: (context, snapshot) {
               print(
                 'Snapshot connection state: ${snapshot.connectionState}, Has data: ${snapshot.hasData}, Data length: ${snapshot.data?.length}',
@@ -436,12 +438,9 @@ class _RecipeScreenState extends State<RecipeScreen>
                 if (_searchQuery.isNotEmpty) {
                   message = 'Không tìm thấy công thức cho "$_searchQuery"';
                 } else if (_selectedCategory != 'Tất cả') {
-                  message =
-                      'Chưa có công thức nào trong danh mục "$_selectedCategory"';
-                } else if (currentUserId != null &&
-                    !(_currentUser?.isAdmin ?? false)) {
-                  message =
-                      'Bạn chưa tạo công thức nào. Hãy thêm công thức mới!';
+                  message = 'Chưa có công thức nào trong danh mục "$_selectedCategory"';
+                } else if (currentUserId != null && !(_currentUser?.isAdmin ?? false)) {
+                  message = 'Bạn chưa tạo công thức nào trong danh mục này. Hãy thêm công thức mới!';
                 } else if (currentUserId == null) {
                   message = 'Vui lòng đăng nhập để xem công thức của bạn.';
                 }
@@ -505,61 +504,61 @@ class _RecipeScreenState extends State<RecipeScreen>
                 width: double.infinity,
                 child: recipe.imageUrl.isNotEmpty
                     ? Stack(
-                        children: [
-                          HybridImageWidget(
-                            imageUrl: recipe.imageUrl,
-                            width: double.infinity,
-                            height: 200,
-                            fit: BoxFit.cover,
-                          ),
-                          Positioned(
-                            top: 10,
-                            right: 10,
-                            child: Container(
-                              decoration: BoxDecoration(
-                                color: isDarkMode
-                                    ? Colors.grey[800]
-                                    : Colors.white,
-                                shape: BoxShape.circle,
-                                boxShadow: [
-                                  BoxShadow(
-                                    color: Colors.black.withOpacity(0.1),
-                                    spreadRadius: 1,
-                                    blurRadius: 5,
-                                  ),
-                                ],
-                              ),
-                              child: IconButton(
-                                icon: Icon(
-                                  _currentUser?.favoriteRecipes.contains(
-                                            recipe.id,
-                                          ) ==
-                                          true
-                                      ? Icons.favorite
-                                      : Icons.favorite_border,
-                                  color: const Color(0xFFFF6B6B),
-                                ),
-                                onPressed: () {
-                                  if (_currentUser != null) {
-                                    _firestoreService.toggleFavoriteRecipe(
-                                      _currentUser!.id,
-                                      recipe.id,
-                                    );
-                                  }
-                                },
-                              ),
+                  children: [
+                    HybridImageWidget(
+                      imageUrl: recipe.imageUrl,
+                      width: double.infinity,
+                      height: 200,
+                      fit: BoxFit.cover,
+                    ),
+                    Positioned(
+                      top: 10,
+                      right: 10,
+                      child: Container(
+                        decoration: BoxDecoration(
+                          color: isDarkMode
+                              ? Colors.grey[800]
+                              : Colors.white,
+                          shape: BoxShape.circle,
+                          boxShadow: [
+                            BoxShadow(
+                              color: Colors.black.withOpacity(0.1),
+                              spreadRadius: 1,
+                              blurRadius: 5,
                             ),
+                          ],
+                        ),
+                        child: IconButton(
+                          icon: Icon(
+                            _currentUser?.favoriteRecipes.contains(
+                              recipe.id,
+                            ) ==
+                                true
+                                ? Icons.favorite
+                                : Icons.favorite_border,
+                            color: const Color(0xFFFF6B6B),
                           ),
-                        ],
-                      )
-                    : Container(
-                        color: Colors.grey[200],
-                        child: const Icon(
-                          Icons.restaurant,
-                          size: 50,
-                          color: Colors.grey,
+                          onPressed: () {
+                            if (_currentUser != null) {
+                              _firestoreService.toggleFavoriteRecipe(
+                                _currentUser!.id,
+                                recipe.id,
+                              );
+                            }
+                          },
                         ),
                       ),
+                    ),
+                  ],
+                )
+                    : Container(
+                  color: Colors.grey[200],
+                  child: const Icon(
+                    Icons.restaurant,
+                    size: 50,
+                    color: Colors.grey,
+                  ),
+                ),
               ),
 
               // Recipe info
@@ -1052,32 +1051,32 @@ class _RecipeScreenState extends State<RecipeScreen>
                           title: const Text('Tạo bằng AI'),
                           subtitle: canUseAI
                               ? const Text(
-                                  'Nhập nguyên liệu có sẵn, AI sẽ tạo công thức',
-                                )
+                            'Nhập nguyên liệu có sẵn, AI sẽ tạo công thức',
+                          )
                               : const Text('Đã hết lượt sử dụng hôm nay'),
                           enabled: canUseAI,
                           onTap: canUseAI
                               ? () {
-                                  Navigator.pop(context);
-                                  Navigator.push(
-                                    context,
-                                    MaterialPageRoute(
-                                      builder: (context) =>
-                                          const AIRecipeGeneratorScreen(),
-                                    ),
-                                  );
-                                }
+                            Navigator.pop(context);
+                            Navigator.push(
+                              context,
+                              MaterialPageRoute(
+                                builder: (context) =>
+                                const AIRecipeGeneratorScreen(),
+                              ),
+                            );
+                          }
                               : () {
-                                  Navigator.pop(context);
-                                  ScaffoldMessenger.of(context).showSnackBar(
-                                    const SnackBar(
-                                      content: Text(
-                                        'Bạn đã hết lượt sử dụng AI hôm nay. Vui lòng thử lại vào ngày mai.',
-                                      ),
-                                      backgroundColor: Colors.red,
-                                    ),
-                                  );
-                                },
+                            Navigator.pop(context);
+                            ScaffoldMessenger.of(context).showSnackBar(
+                              const SnackBar(
+                                content: Text(
+                                  'Bạn đã hết lượt sử dụng AI hôm nay. Vui lòng thử lại vào ngày mai.',
+                                ),
+                                backgroundColor: Colors.red,
+                              ),
+                            );
+                          },
                         );
                       },
                     ),
