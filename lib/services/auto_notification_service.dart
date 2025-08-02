@@ -60,7 +60,7 @@ class AutoNotificationService {
   }) async {
     try {
       // Sử dụng legacy server key thực từ Firebase Console
-      const String serverKey = 'AAAAYourServerKey'; // Cần thay bằng server key thực từ Firebase
+      const String serverKey = 'BPlf2vZubvhkDDbm45_P9W6nf6QykoQzemNDNMLOPrjvD_xnij6uFOkXQLM_HuHHdAcdIsadQWbtDajbt1HGUl4'; // Cần thay bằng server key thực từ Firebase
 
       final response = await http.post(
         Uri.parse('https://fcm.googleapis.com/fcm/send'),
