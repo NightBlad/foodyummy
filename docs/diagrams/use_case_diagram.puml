@@ -1,0 +1,86 @@
+@startuml Use_Case_Diagram_General
+!theme plain
+title FoodyYummy - General Use Case Diagram
+
+' Define actors
+:User: as user
+:Admin: as admin
+
+rectangle "FoodyYummy System" {
+  
+  ' User Use Cases
+  package "Account Management" {
+    (Register/Login) as register
+    (Update Profile) as updateProfile
+  }
+  
+  package "Search and View Content" {
+    (Search Recipes) as searchRecipes
+    (View Recipe Details) as viewRecipeDetails
+    (Filter and Sort) as filterSort
+  }
+  
+  package "Personal Recipe Management" {
+    (Create Recipe) as createRecipe
+    (Edit Recipe) as editRecipe
+    (Delete Recipe) as deleteRecipe
+  }
+  
+  package "Social Interactions" {
+    (Rate Recipe) as rateRecipe
+    (Comment on Recipe) as commentRecipe
+    (Favorite Recipe) as favoriteRecipe
+  }
+  
+  ' Admin Use Cases
+  package "System Management" {
+    (System Configuration) as systemConfig
+    (View Statistics) as viewStats
+  }
+  
+  package "User Management" {
+    (Manage User Accounts) as manageUsers
+    (Manage Permissions) as managePermissions
+  }
+  
+  package "Content Management" {
+    (Review Recipes) as reviewRecipes
+    (Manage Categories) as manageCategories
+  }
+}
+
+' User relationships
+user --> register
+user --> updateProfile
+user --> searchRecipes
+user --> viewRecipeDetails
+user --> filterSort
+user --> createRecipe
+user --> editRecipe
+user --> deleteRecipe
+user --> rateRecipe
+user --> commentRecipe
+user --> favoriteRecipe
+
+' Admin relationships
+admin --> systemConfig
+admin --> viewStats
+admin --> manageUsers
+admin --> managePermissions
+admin --> reviewRecipes
+admin --> manageCategories
+
+' Include relationships
+register .> updateProfile : <<include>>
+createRecipe .> searchRecipes : <<include>>
+editRecipe .> viewRecipeDetails : <<include>>
+
+' Extend relationships
+filterSort .> searchRecipes : <<extend>>
+commentRecipe .> viewRecipeDetails : <<extend>>
+rateRecipe .> viewRecipeDetails : <<extend>>
+
+' Inheritance - Admin is also a User
+admin --|> user
+
+@enduml
